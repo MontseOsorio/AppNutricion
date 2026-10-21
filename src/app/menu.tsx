@@ -1,0 +1,456 @@
+import {
+    Image,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native';
+
+import { router } from 'expo-router';
+import { useState } from 'react';
+export default function Menu() {
+    
+
+  const [comidasAbiertas, setComidasAbiertas] = useState({
+    desayuno: true,
+    colacion: false,
+    comida: false,
+    cena: false,
+  });
+
+  const cambiarComida = (comida: string) => {
+    setComidasAbiertas({
+      ...comidasAbiertas,
+      [comida]: !comidasAbiertas[
+        comida as keyof typeof comidasAbiertas
+      ],
+    });
+  };
+
+  const mostrarComida = (
+    titulo: string,
+    comida: string,
+    alimentos: string[],
+    calorias: string
+  ) => {
+
+    const abierta =
+      comidasAbiertas[
+        comida as keyof typeof comidasAbiertas
+      ];
+
+    return (
+      <View style={styles.tarjetaComida}>
+
+        <TouchableOpacity
+          style={styles.encabezadoComida}
+          onPress={() => cambiarComida(comida)}
+          activeOpacity={0.7}
+        >
+
+          <Text style={styles.tituloComida}>
+            {titulo}
+          </Text>
+
+          <View style={styles.ladoDerecho}>
+
+            <Text style={styles.caloriasPequenas}>
+              {calorias}
+            </Text>
+
+            <Text style={styles.flecha}>
+              {abierta ? '▲' : '▼'}
+            </Text>
+
+          </View>
+
+        </TouchableOpacity>
+
+        {abierta && (
+          <View style={styles.listaAlimentos}>
+
+            {alimentos.map((alimento, index) => (
+              <View
+                key={index}
+                style={styles.alimento}
+              >
+                <Text style={styles.punto}>
+                  •
+                </Text>
+
+                <Text style={styles.textoAlimento}>
+                  {alimento}
+                </Text>
+              </View>
+            ))}
+
+            <Text style={styles.calorias}>
+              {calorias}
+            </Text>
+
+          </View>
+        )}
+
+      </View>
+    );
+  };
+
+  return (
+    <View style={styles.container}>
+
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scroll}
+      >
+
+        {/* Título */}
+        <Text style={styles.titulo}>
+          Mi menú
+        </Text>
+
+        <Text style={styles.subtitulo}>
+          Tu alimentación para hoy
+        </Text>
+        <TouchableOpacity
+  style={styles.botonPerfil}
+  onPress={() => router.push('/perfil')}
+>
+  <Text style={styles.iconoPerfil}>👤</Text>
+
+  <Text style={styles.textoPerfil}>
+    Mi perfil
+  </Text>
+
+  <Text style={styles.flechaPerfil}>
+    ›
+  </Text>
+</TouchableOpacity>
+        {/* Plato nutritivo */}
+        <Image
+          source={require('../../assets/images/PlatoNutritivo.png')}
+          style={styles.plato}
+          resizeMode="contain"
+        />
+
+        {/* Resumen de calorías */}
+        <View style={styles.tarjetaCalorias}>
+
+          <View>
+            <Text style={styles.textoResumen}>
+              Consumo del día
+            </Text>
+
+            <Text style={styles.subtextoResumen}>
+              Meta estimada
+            </Text>
+          </View>
+
+          <View style={styles.caloriasTotales}>
+            <Text style={styles.numeroCalorias}>
+              1,570
+            </Text>
+
+            <Text style={styles.kcal}>
+              kcal
+            </Text>
+          </View>
+
+        </View>
+
+        {/* Desayuno */}
+        {mostrarComida(
+          '☀️  Desayuno',
+          'desayuno',
+          [
+            '2 huevos a la mexicana',
+            '2 tortillas',
+            'Aguacate',
+          ],
+          '420 kcal'
+        )}
+
+        {/* Colación */}
+        {mostrarComida(
+          '🍎  Colación',
+          'colacion',
+          [
+            'Avena',
+            'Plátano',
+            'Canela',
+          ],
+          '250 kcal'
+        )}
+
+        {/* Comida */}
+        {mostrarComida(
+          '🍽️  Comida',
+          'comida',
+          [
+            'Pechuga de pollo',
+            'Arroz',
+            'Ensalada de verduras',
+          ],
+          '550 kcal'
+        )}
+
+        {/* Cena */}
+        {mostrarComida(
+          '🌙  Cena',
+          'cena',
+          [
+            'Tostadas de pollo',
+            'Lechuga',
+            'Aguacate',
+          ],
+          '350 kcal'
+        )}
+
+        {/* Mensaje */}
+        <View style={styles.mensaje}>
+
+          <Text style={styles.mensajeTexto}>
+            ¡Vas muy bien, no te rindas!
+          </Text>
+
+          <Text style={styles.mensajeSubtexto}>
+            Sigue tu plan y mantente hidratado.
+          </Text>
+
+        </View>
+
+      </ScrollView>
+
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+
+  container: {
+    flex: 1,
+    backgroundColor: '#f1e8cf',
+  },
+
+  scroll: {
+    paddingHorizontal: 22,
+    paddingTop: 45,
+    paddingBottom: 30,
+  },
+
+  titulo: {
+    fontSize: 29,
+    fontWeight: '800',
+    color: '#1F416A',
+    textAlign: 'center',
+    marginBottom: 5,
+  },
+
+  subtitulo: {
+    fontSize: 14,
+    color: '#666666',
+    textAlign: 'center',
+  },
+
+  plato: {
+    width: 190,
+    height: 150,
+    alignSelf: 'center',
+    marginVertical: -3,
+  },
+
+  tarjetaCalorias: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 23,
+    padding: 17,
+    marginBottom: 14,
+
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 3,
+    },
+    shadowOpacity: 0.10,
+    shadowRadius: 8,
+
+    elevation: 4,
+  },
+
+  textoResumen: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#333333',
+  },
+
+  subtextoResumen: {
+    fontSize: 11,
+    color: '#888888',
+    marginTop: 3,
+  },
+
+  caloriasTotales: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+  },
+
+  numeroCalorias: {
+    fontSize: 23,
+    fontWeight: '800',
+    color: '#4089C0',
+  },
+
+  kcal: {
+    fontSize: 11,
+    color: '#777777',
+    marginLeft: 4,
+    marginBottom: 3,
+  },
+
+  tarjetaComida: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 23,
+    marginBottom: 13,
+
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+
+    elevation: 3,
+
+    overflow: 'hidden',
+  },
+
+  encabezadoComida: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+  },
+
+  tituloComida: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#1F416A',
+  },
+
+  ladoDerecho: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  caloriasPequenas: {
+    fontSize: 10,
+    color: '#888888',
+    marginRight: 10,
+  },
+
+  flecha: {
+    fontSize: 11,
+    color: '#4089C0',
+    fontWeight: '800',
+  },
+
+  listaAlimentos: {
+    paddingHorizontal: 16,
+    paddingBottom: 15,
+    borderTopWidth: 1,
+    borderTopColor: '#F0F0F0',
+  },
+
+  alimento: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 5,
+  },
+
+  punto: {
+    fontSize: 16,
+    color: '#4089C0',
+    marginRight: 8,
+  },
+
+  textoAlimento: {
+    fontSize: 12,
+    color: '#555555',
+  },
+
+  calorias: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#4089C0',
+    marginTop: 5,
+  },
+
+  mensaje: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 22,
+    padding: 18,
+    alignItems: 'center',
+    marginTop: 2,
+  },
+
+  mensajeTexto: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#4089C0',
+  },
+
+  mensajeSubtexto: {
+    fontSize: 11,
+    color: '#777777',
+    marginTop: 4,
+  },
+botonPerfil: {
+  backgroundColor: '#FFFFFF',
+  borderRadius: 20,
+  paddingHorizontal: 15,
+  paddingVertical: 11,
+  marginTop: 15,
+  marginBottom: 3,
+
+  flexDirection: 'row',
+  alignItems: 'center',
+
+  shadowColor: '#000',
+  shadowOffset: {
+    width: 0,
+    height: 2,
+  },
+  shadowOpacity: 0.08,
+  shadowRadius: 6,
+
+  elevation: 3,
+},
+
+iconoPerfil: {
+  width: 38,
+  height: 38,
+  borderRadius: 13,
+  backgroundColor: '#dcecf8',
+  textAlign: 'center',
+  textAlignVertical: 'center',
+  fontSize: 20,
+  marginRight: 10,
+},
+
+textoPerfil: {
+  flex: 1,
+  fontSize: 14,
+  fontWeight: '800',
+  color: '#1F416A',
+},
+
+flechaPerfil: {
+  fontSize: 27,
+  color: '#4089C0',
+},
+});
+
