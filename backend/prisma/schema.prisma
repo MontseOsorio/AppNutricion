@@ -1,0 +1,370 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model alimentos {
+  id_alimento     Int     @id @default(autoincrement())
+  nombre          String  @db.VarChar(150)
+  descripcion     String? @db.Text
+  categoria       String? @db.VarChar(80)
+  unidad_base     String  @default("g") @db.VarChar(30)
+  calorias        Decimal @default(0.00) @db.Decimal(8, 2)
+  proteinas_g     Decimal @default(0.00) @db.Decimal(8, 2)
+  carbohidratos_g Decimal @default(0.00) @db.Decimal(8, 2)
+  grasas_g        Decimal @default(0.00) @db.Decimal(8, 2)
+  fibra_g         Decimal @default(0.00) @db.Decimal(8, 2)
+  azucares_g      Decimal @default(0.00) @db.Decimal(8, 2)
+  sodio_mg        Decimal @default(0.00) @db.Decimal(8, 2)
+  activo          Boolean @default(true)
+
+  @@index([nombre], map: "idx_alimentos_nombre")
+}
+
+model citas {
+  id_cita         Int          @id @default(autoincrement())
+  id_estudiante   Int
+  id_nutriologa   Int
+  fecha           DateTime     @db.Date
+  hora            DateTime     @db.Time(0)
+  motivo          String?      @db.Text
+  estado          citas_estado @default(pendiente)
+  fecha_solicitud DateTime     @default(now()) @db.Timestamp(0)
+
+  @@index([id_nutriologa], map: "id_nutriologa")
+  @@index([id_estudiante, fecha], map: "idx_citas_estudiante")
+  @@index([fecha, estado], map: "idx_citas_fecha_estado")
+}
+
+model comidas {
+  id_comida     Int          @id @default(autoincrement())
+  id_plan       Int
+  nombre        String       @db.VarChar(150)
+  tipo          comidas_tipo
+  dia_plan      Int          @default(1) @db.UnsignedTinyInt
+  hora_sugerida DateTime?    @db.Time(0)
+  instrucciones String?      @db.Text
+
+  @@index([id_plan, dia_plan], map: "idx_comidas_plan_dia")
+}
+
+model consultas {
+  id_consulta             Int      @id @default(autoincrement())
+  id_cita                 Int?     @unique(map: "id_cita")
+  id_estudiante           Int
+  id_nutriologa           Int
+  fecha_consulta          DateTime @db.DateTime(0)
+  motivo                  String?  @db.Text
+  observaciones           String?  @db.Text
+  diagnostico_nutricional String?  @db.Text
+  recomendaciones         String?  @db.Text
+  seguimiento             String?  @db.Text
+
+  @@index([id_nutriologa], map: "id_nutriologa")
+  @@index([id_estudiante, fecha_consulta], map: "idx_consultas_estudiante")
+}
+
+model detalle_comidas {
+  id_detalle_comida Int     @id @default(autoincrement())
+  id_comida         Int
+  id_alimento       Int
+  cantidad          Decimal @db.Decimal(8, 2)
+  unidad            String  @db.VarChar(30)
+  indicaciones      String? @db.Text
+
+  @@index([id_alimento], map: "id_alimento")
+  @@index([id_comida], map: "idx_detalle_comidas")
+}
+
+model detalle_lista_compras {
+  id_detalle_lista Int       @id @default(autoincrement())
+  id_lista         Int
+  id_alimento      Int?
+  producto         String    @db.VarChar(150)
+  cantidad         Decimal   @db.Decimal(8, 2)
+  unidad           String    @db.VarChar(30)
+  comprado         Boolean   @default(false)
+  fecha_compra     DateTime? @db.DateTime(0)
+
+  @@index([id_alimento], map: "id_alimento")
+  @@index([id_lista], map: "id_lista")
+}
+
+model detalle_menu {
+  id_detalle_menu Int                      @id @default(autoincrement())
+  id_menu         Int
+  id_platillo     Int
+  tipo_comida     detalle_menu_tipo_comida
+  horario_inicio  DateTime?                @db.Time(0)
+  horario_fin     DateTime?                @db.Time(0)
+  disponible      Boolean                  @default(true)
+
+  @@unique([id_menu, id_platillo], map: "uq_menu_platillo")
+  @@index([id_platillo], map: "id_platillo")
+  @@index([tipo_comida, disponible], map: "idx_detalle_menu_tipo")
+}
+
+model disponibilidad {
+  id_disponibilidad Int                       @id @default(autoincrement())
+  id_nutriologa     Int
+  dia_semana        disponibilidad_dia_semana
+  hora_inicio       DateTime                  @db.Time(0)
+  hora_fin          DateTime                  @db.Time(0)
+  fecha_especifica  DateTime?                 @db.Date
+  disponible        Boolean                   @default(true)
+
+  @@index([id_nutriologa], map: "id_nutriologa")
+  @@index([fecha_especifica, dia_semana], map: "idx_disponibilidad_fecha")
+}
+
+model equivalencias_cafeteria {
+  id_equivalencia   Int                                       @id @default(autoincrement())
+  id_comida         Int
+  id_detalle_menu   Int
+  porcion_sugerida  String?                                   @db.VarChar(150)
+  observaciones     String?                                   @db.Text
+  estado_validacion equivalencias_cafeteria_estado_validacion @default(pendiente)
+  id_nutriologa     Int?
+  fecha_validacion  DateTime?                                 @db.DateTime(0)
+
+  @@unique([id_comida, id_detalle_menu], map: "uq_equivalencia")
+  @@index([id_detalle_menu], map: "id_detalle_menu")
+  @@index([id_nutriologa], map: "id_nutriologa")
+  @@index([estado_validacion], map: "idx_equivalencia_estado")
+}
+
+model ingredientes_platillo {
+  id_ingrediente_platillo Int     @id @default(autoincrement())
+  id_platillo             Int
+  id_alimento             Int
+  cantidad                Decimal @db.Decimal(8, 2)
+  unidad                  String  @db.VarChar(30)
+
+  @@index([id_alimento], map: "id_alimento")
+  @@index([id_platillo], map: "idx_ingredientes_platillo")
+}
+
+model listas_compras {
+  id_lista       Int                   @id @default(autoincrement())
+  id_estudiante  Int
+  id_plan        Int?
+  nombre         String                @db.VarChar(150)
+  fecha_creacion DateTime              @default(now()) @db.Timestamp(0)
+  estado         listas_compras_estado @default(pendiente)
+
+  @@index([id_plan], map: "id_plan")
+  @@index([id_estudiante], map: "idx_listas_estudiante")
+}
+
+model mediciones {
+  id_medicion      Int      @id @default(autoincrement())
+  id_estudiante    Int
+  id_consulta      Int?
+  fecha_medicion   DateTime @db.Date
+  peso_kg          Decimal? @db.Decimal(5, 2)
+  estatura_cm      Decimal? @db.Decimal(5, 2)
+  porcentaje_grasa Decimal? @db.Decimal(5, 2)
+  observaciones    String?  @db.Text
+
+  @@index([id_consulta], map: "id_consulta")
+  @@index([id_estudiante, fecha_medicion], map: "idx_mediciones_estudiante_fecha")
+}
+
+model menus_cafeteria {
+  id_menu     Int      @id @default(autoincrement())
+  nombre      String   @db.VarChar(150)
+  fecha       DateTime @db.Date
+  descripcion String?  @db.Text
+  ubicacion   String?  @db.VarChar(150)
+  activo      Boolean  @default(true)
+
+  @@unique([nombre, fecha], map: "uq_menu_fecha")
+  @@index([fecha, activo], map: "idx_menu_fecha_activo")
+}
+
+model metas_hidratacion {
+  id_meta            Int       @id @default(autoincrement())
+  id_usuario         Int
+  fecha_inicio       DateTime  @db.Date
+  fecha_fin          DateTime? @db.Date
+  objetivo_diario_ml Int       @db.UnsignedInt
+  activa             Boolean   @default(true)
+
+  @@index([id_usuario, fecha_inicio], map: "idx_metas_usuario_fecha")
+}
+
+model perfiles {
+  id_perfil                  Int       @id @default(autoincrement())
+  id_usuario                 Int       @unique(map: "id_usuario")
+  matricula                  String?   @unique(map: "matricula") @db.VarChar(30)
+  carrera                    String?   @db.VarChar(100)
+  semestre                   Int?      @db.UnsignedTinyInt
+  fecha_nacimiento           DateTime? @db.Date
+  sexo                       String?   @db.VarChar(30)
+  telefono                   String?   @db.VarChar(20)
+  objetivo_nutricional       String?   @db.Text
+  alergias                   String?   @db.Text
+  restricciones_alimenticias String?   @db.Text
+}
+
+model planes_alimenticios {
+  id_plan           Int                        @id @default(autoincrement())
+  id_estudiante     Int
+  id_nutriologa     Int
+  nombre            String                     @db.VarChar(150)
+  descripcion       String?                    @db.Text
+  fecha_inicio      DateTime                   @db.Date
+  fecha_fin         DateTime?                  @db.Date
+  calorias_objetivo Int?                       @db.UnsignedInt
+  estado            planes_alimenticios_estado @default(borrador)
+  fecha_creacion    DateTime                   @default(now()) @db.Timestamp(0)
+
+  @@index([id_nutriologa], map: "id_nutriologa")
+  @@index([id_estudiante, estado], map: "idx_planes_estudiante_estado")
+}
+
+model platillos {
+  id_platillo          Int      @id @default(autoincrement())
+  nombre               String   @db.VarChar(150)
+  descripcion          String?  @db.Text
+  precio               Decimal? @db.Decimal(8, 2)
+  porcion_referencia_g Decimal? @db.Decimal(8, 2)
+  calorias             Decimal? @db.Decimal(8, 2)
+  proteinas_g          Decimal? @db.Decimal(8, 2)
+  carbohidratos_g      Decimal? @db.Decimal(8, 2)
+  grasas_g             Decimal? @db.Decimal(8, 2)
+  alergenos            String?  @db.Text
+  disponible           Boolean  @default(true)
+
+  @@index([nombre], map: "idx_platillos_nombre")
+}
+
+model recordatorios {
+  id_recordatorio Int                  @id @default(autoincrement())
+  id_usuario      Int
+  titulo          String               @db.VarChar(150)
+  descripcion     String?              @db.Text
+  fecha_hora      DateTime             @db.DateTime(0)
+  tipo            recordatorios_tipo   @default(otro)
+  estado          recordatorios_estado @default(pendiente)
+  fecha_creacion  DateTime             @default(now()) @db.Timestamp(0)
+
+  @@index([id_usuario, fecha_hora], map: "idx_recordatorios_usuario_fecha")
+}
+
+model registro_agua {
+  id_registro_agua Int      @id @default(autoincrement())
+  id_usuario       Int
+  id_tipo_botella  Int?
+  fecha_hora       DateTime @default(now()) @db.DateTime(0)
+  cantidad_ml      Int      @db.UnsignedInt
+  observaciones    String?  @db.Text
+
+  @@index([id_tipo_botella], map: "id_tipo_botella")
+  @@index([id_usuario, fecha_hora], map: "idx_agua_usuario_fecha")
+}
+
+model sustituciones {
+  id_sustitucion          Int     @id @default(autoincrement())
+  id_alimento_original    Int
+  id_alimento_alternativo Int
+  cantidad_original       Decimal @db.Decimal(8, 2)
+  cantidad_alternativa    Decimal @db.Decimal(8, 2)
+  unidad_original         String  @db.VarChar(30)
+  unidad_alternativa      String  @db.VarChar(30)
+  observaciones           String? @db.Text
+
+  @@unique([id_alimento_original, id_alimento_alternativo], map: "uq_sustitucion")
+  @@index([id_alimento_alternativo], map: "id_alimento_alternativo")
+}
+
+model tipos_botella {
+  id_tipo_botella Int     @id @default(autoincrement())
+  nombre          String  @db.VarChar(80)
+  capacidad_ml    Int     @db.UnsignedInt
+  imagen_url      String? @db.VarChar(500)
+  activa          Boolean @default(true)
+}
+
+model usuarios {
+  id_usuario      Int          @id @default(autoincrement())
+  nombre          String       @db.VarChar(100)
+  apellidos       String       @db.VarChar(150)
+  correo          String       @unique(map: "correo") @db.VarChar(150)
+  contrasena_hash String       @db.VarChar(255)
+  rol             usuarios_rol
+  activo          Boolean      @default(true)
+  fecha_registro  DateTime     @default(now()) @db.Timestamp(0)
+}
+
+enum disponibilidad_dia_semana {
+  lunes
+  martes
+  miercoles
+  jueves
+  viernes
+}
+
+enum comidas_tipo {
+  desayuno
+  comida
+  cena
+  colacion
+}
+
+enum detalle_menu_tipo_comida {
+  desayuno
+  comida
+  cena
+  colacion
+}
+
+enum equivalencias_cafeteria_estado_validacion {
+  pendiente
+  aprobada
+  rechazada
+}
+
+enum listas_compras_estado {
+  pendiente
+  en_progreso
+  completada
+}
+
+enum recordatorios_tipo {
+  cita
+  comida
+  agua
+  otro
+}
+
+enum usuarios_rol {
+  estudiante
+  nutriologa
+}
+
+enum citas_estado {
+  pendiente
+  confirmada
+  completada
+  cancelada
+  no_asistio
+}
+
+enum recordatorios_estado {
+  pendiente
+  enviado
+  leido
+  cancelado
+}
+
+enum planes_alimenticios_estado {
+  borrador
+  activo
+  finalizado
+  cancelado
+}
