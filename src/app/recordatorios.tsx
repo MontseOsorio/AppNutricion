@@ -356,5 +356,18 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#777777',
   },
+  botonCita: {
+    backgroundColor: '#1F416A',
+    paddingVertical: 14,
+    borderRadius: 18,
+    alignItems: 'center',
+    marginTop: 10,
+    marginBottom: 20,
+  },
 
+  botonCitaTexto: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
+  },
 });

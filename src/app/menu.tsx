@@ -1,16 +1,16 @@
 import {
-    Image,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
 import { router } from 'expo-router';
 import { useState } from 'react';
+
 export default function Menu() {
-    
 
   const [comidasAbiertas, setComidasAbiertas] = useState({
     desayuno: true,
@@ -112,20 +112,57 @@ export default function Menu() {
         <Text style={styles.subtitulo}>
           Tu alimentación para hoy
         </Text>
+
+        {/* Botón de perfil */}
         <TouchableOpacity
-  style={styles.botonPerfil}
-  onPress={() => router.push('/perfil')}
->
-  <Text style={styles.iconoPerfil}>👤</Text>
+          style={styles.botonPerfil}
+          onPress={() => router.push('/perfil')}
+          activeOpacity={0.7}
+        >
 
-  <Text style={styles.textoPerfil}>
-    Mi perfil
-  </Text>
+          <Text style={styles.iconoPerfil}>
+            👤
+          </Text>
 
-  <Text style={styles.flechaPerfil}>
-    ›
-  </Text>
-</TouchableOpacity>
+          <Text style={styles.textoPerfil}>
+            Mi perfil
+          </Text>
+
+          <Text style={styles.flechaPerfil}>
+            ›
+          </Text>
+
+        </TouchableOpacity>
+
+        {/* NUEVO: Botón de cocina */}
+        <TouchableOpacity
+          style={styles.botonCocina}
+          onPress={() => router.push('/cocina')}
+          activeOpacity={0.7}
+        >
+
+          <Text style={styles.iconoCocina}>
+            🍳
+          </Text>
+
+          <View style={styles.contenidoCocina}>
+
+            <Text style={styles.textoCocina}>
+              Mi cocina
+            </Text>
+
+            <Text style={styles.subtextoCocina}>
+              Selecciona los aparatos que tienes en casa
+            </Text>
+
+          </View>
+
+          <Text style={styles.flechaCocina}>
+            ›
+          </Text>
+
+        </TouchableOpacity>
+
         {/* Plato nutritivo */}
         <Image
           source={require('../../assets/images/PlatoNutritivo.png')}
@@ -220,7 +257,9 @@ export default function Menu() {
         </View>
 
       </ScrollView>
-
+          <TouchableOpacity onPress={() => router.push('/cocina')}>
+  <Text>Mi cocina 🍳</Text>
+</TouchableOpacity>
     </View>
   );
 }
@@ -408,49 +447,108 @@ const styles = StyleSheet.create({
     color: '#777777',
     marginTop: 4,
   },
-botonPerfil: {
-  backgroundColor: '#FFFFFF',
-  borderRadius: 20,
-  paddingHorizontal: 15,
-  paddingVertical: 11,
-  marginTop: 15,
-  marginBottom: 3,
 
-  flexDirection: 'row',
-  alignItems: 'center',
+  botonPerfil: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    paddingHorizontal: 15,
+    paddingVertical: 11,
+    marginTop: 15,
+    marginBottom: 3,
 
-  shadowColor: '#000',
-  shadowOffset: {
-    width: 0,
-    height: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+
+    elevation: 3,
   },
-  shadowOpacity: 0.08,
-  shadowRadius: 6,
 
-  elevation: 3,
-},
+  iconoPerfil: {
+    width: 38,
+    height: 38,
+    borderRadius: 13,
+    backgroundColor: '#dcecf8',
+    textAlign: 'center',
+    textAlignVertical: 'center',
+    fontSize: 20,
+    marginRight: 10,
+  },
 
-iconoPerfil: {
-  width: 38,
-  height: 38,
-  borderRadius: 13,
-  backgroundColor: '#dcecf8',
-  textAlign: 'center',
-  textAlignVertical: 'center',
-  fontSize: 20,
-  marginRight: 10,
-},
+  textoPerfil: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#1F416A',
+  },
 
-textoPerfil: {
-  flex: 1,
-  fontSize: 14,
-  fontWeight: '800',
-  color: '#1F416A',
-},
+  flechaPerfil: {
+    fontSize: 27,
+    color: '#4089C0',
+  },
 
-flechaPerfil: {
-  fontSize: 27,
-  color: '#4089C0',
-},
+  /* NUEVOS ESTILOS PARA EL BOTÓN DE COCINA */
+  botonCocina: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    paddingHorizontal: 15,
+    paddingVertical: 11,
+    marginTop: 10,
+    marginBottom: 8,
+
+    flexDirection: 'row',
+    alignItems: 'center',
+
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+
+    elevation: 3,
+  },
+
+  iconoCocina: {
+    width: 38,
+    height: 38,
+    borderRadius: 13,
+    backgroundColor: '#e5eedf',
+    textAlign: 'center',
+    textAlignVertical: 'center',
+    fontSize: 20,
+    marginRight: 10,
+    overflow: 'hidden',
+    paddingTop: 7,
+  },
+
+  contenidoCocina: {
+    flex: 1,
+  },
+
+  textoCocina: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#1F416A',
+  },
+
+  subtextoCocina: {
+    fontSize: 11,
+    color: '#777777',
+    marginTop: 3,
+  },
+
+  flechaCocina: {
+    fontSize: 27,
+    color: '#4089C0',
+    marginLeft: 8,
+  },
+
 });
-
