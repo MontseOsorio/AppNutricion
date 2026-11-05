@@ -41,3 +41,14 @@ example
 # generated native folders
 /ios
 /android
+
+node_modules/
+.env
+.env.*
+!.env.example
+.expo/
+
+# Backend environment variables
+backend/.env
+backend/.env.*
+!backend/.env.example
