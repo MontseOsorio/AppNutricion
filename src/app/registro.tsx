@@ -1,22 +1,102 @@
+
 import {
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
 import { router } from 'expo-router';
+import { useState } from 'react';
+
+const API_URL = 'http://148.220.214.230:3000';
 
 export default function Registro() {
+
+  const [nombreCompleto, setNombreCompleto] = useState('');
+  const [expediente, setExpediente] = useState('');
+  const [correo, setCorreo] = useState('');
+  const [contrasena, setContrasena] = useState('');
+  const [confirmarContrasena, setConfirmarContrasena] = useState('');
+  const [cargando, setCargando] = useState(false);
+
+  const registrarUsuario = async () => {
+
+    if (
+      !nombreCompleto.trim() ||
+      !expediente.trim() ||
+      !correo.trim() ||
+      !contrasena ||
+      !confirmarContrasena
+    ) {
+      Alert.alert('Campos incompletos', 'Completa todos los campos.');
+      return;
+    }
+
+    if (contrasena !== confirmarContrasena) {
+      Alert.alert('Contraseñas diferentes', 'Las contraseñas no coinciden.');
+      return;
+    }
+
+    setCargando(true);
+
+    try {
+
+      const respuesta = await fetch(`${API_URL}/api/registro`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          nombreCompleto,
+          expediente,
+          correo,
+          contrasena,
+          confirmarContrasena,
+        }),
+      });
+
+      const datos = await respuesta.json();
+
+      if (!respuesta.ok) {
+        Alert.alert('No se pudo crear la cuenta', datos.mensaje);
+        return;
+      }
+
+      Alert.alert(
+        '¡Registro exitoso!',
+        'Tu cuenta de TroyaFit fue creada correctamente.',
+        [
+          {
+            text: 'Iniciar sesión',
+            onPress: () => router.replace('/login'),
+          },
+        ]
+      );
+
+    } catch (error) {
+
+      console.log('Error de registro:', error);
+
+      Alert.alert(
+        'Error de conexión',
+        'No fue posible comunicarse con el servidor. Intenta nuevamente.'
+      );
+
+    } finally {
+      setCargando(false);
+    }
+  };
+
   return (
     <ScrollView
       contentContainerStyle={styles.container}
       showsVerticalScrollIndicator={false}
     >
 
-      {/* Regresar */}
       <TouchableOpacity
         style={styles.regresar}
         onPress={() => router.back()}
@@ -25,7 +105,6 @@ export default function Registro() {
         <Text style={styles.textoRegresar}>Regresar</Text>
       </TouchableOpacity>
 
-      {/* Título */}
       <Text style={styles.titulo}>
         Crear una cuenta
       </Text>
@@ -34,7 +113,6 @@ export default function Registro() {
         Únete a la comunidad de TroyaFit
       </Text>
 
-      {/* Formulario */}
       <View style={styles.formulario}>
 
         <Text style={styles.etiqueta}>
@@ -45,8 +123,10 @@ export default function Registro() {
           style={styles.input}
           placeholder="Escribe tu nombre"
           placeholderTextColor="#999999"
+          value={nombreCompleto}
+          onChangeText={setNombreCompleto}
         />
-        
+
         <Text style={styles.etiqueta}>
           Expediente
         </Text>
@@ -55,6 +135,9 @@ export default function Registro() {
           style={styles.input}
           placeholder="Expediente"
           placeholderTextColor="#999999"
+          value={expediente}
+          onChangeText={setExpediente}
+          autoCapitalize="none"
         />
 
         <Text style={styles.etiqueta}>
@@ -67,6 +150,8 @@ export default function Registro() {
           placeholderTextColor="#999999"
           keyboardType="email-address"
           autoCapitalize="none"
+          value={correo}
+          onChangeText={setCorreo}
         />
 
         <Text style={styles.etiqueta}>
@@ -78,6 +163,8 @@ export default function Registro() {
           placeholder="Crea una contraseña"
           placeholderTextColor="#999999"
           secureTextEntry
+          value={contrasena}
+          onChangeText={setContrasena}
         />
 
         <Text style={styles.etiqueta}>
@@ -89,24 +176,30 @@ export default function Registro() {
           placeholder="Repite tu contraseña"
           placeholderTextColor="#999999"
           secureTextEntry
+          value={confirmarContrasena}
+          onChangeText={setConfirmarContrasena}
         />
 
       </View>
 
-      {/* Botón */}
-      <TouchableOpacity style={styles.boton}>
+      <TouchableOpacity
+        style={styles.boton}
+        onPress={registrarUsuario}
+        disabled={cargando}
+      >
         <Text style={styles.textoBoton}>
-          Crear mi cuenta
+          {cargando ? 'Creando cuenta...' : 'Crear mi cuenta'}
         </Text>
       </TouchableOpacity>
 
-      {/* Iniciar sesión */}
       <View style={styles.iniciar}>
         <Text style={styles.textoPregunta}>
           ¿Ya tienes una cuenta?
         </Text>
 
-        <TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => router.push('/login')}
+        >
           <Text style={styles.iniciarSesion}>
             Iniciar sesión
           </Text>
@@ -165,7 +258,6 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     padding: 20,
     marginBottom: 20,
-
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -173,7 +265,6 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.10,
     shadowRadius: 8,
-
     elevation: 4,
   },
 
@@ -202,7 +293,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#4089C0',
     paddingVertical: 16,
     borderRadius: 28,
-
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -210,7 +300,6 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.15,
     shadowRadius: 5,
-
     elevation: 4,
   },
 

@@ -151,13 +151,13 @@ export default function Recordatorios() {
 
       </View>
 
-{/* Botón para agendar cita */}
+{/* Botón para consultar citas */}
 <TouchableOpacity
-  style={styles.botonCita}
-  onPress={() => router.push('/cita')}
+  style={styles.botonMisCitas}
+  onPress={() => router.push('/mis-citas')}
 >
-  <Text style={styles.botonCitaTexto}>
-    📅 Agendar cita
+  <Text style={styles.botonMisCitasTexto}>
+    📋 Mis citas
   </Text>
 </TouchableOpacity>
 
@@ -370,4 +370,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
   },
+  botonMisCitas: {
+  backgroundColor: '#FFFFFF',
+  paddingVertical: 14,
+  borderRadius: 18,
+  alignItems: 'center',
+  marginTop: 5,
+  marginBottom: 20,
+  borderWidth: 1.5,
+  borderColor: '#4089C0',
+},
+
+botonMisCitasTexto: {
+  color: '#1F416A',
+  fontSize: 16,
+  fontWeight: '700',
+},
 });

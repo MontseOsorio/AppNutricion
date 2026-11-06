@@ -1,4 +1,6 @@
+
 import {
+  Alert,
   StyleSheet,
   Text,
   TextInput,
@@ -6,9 +8,100 @@ import {
   View,
 } from 'react-native';
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
+import { useState } from 'react';
+
+const API_URL = 'http://192.168.0.10:3000';
 
 export default function Login() {
+
+  const [tipoUsuario, setTipoUsuario] = useState<'estudiante' | 'nutriologa'>('estudiante');
+  const [expediente, setExpediente] = useState('');
+  const [correo, setCorreo] = useState('');
+  const [contrasena, setContrasena] = useState('');
+  const [cargando, setCargando] = useState(false);
+
+
+const iniciarSesion = async () => {
+  const identificador = tipoUsuario === 'estudiante'
+    ? expediente.trim()
+    : correo.trim();
+
+  if (!identificador || !contrasena.trim()) {
+    Alert.alert(
+      'Campos incompletos',
+      tipoUsuario === 'estudiante'
+        ? 'Ingresa tu expediente y contraseña.'
+        : 'Ingresa tu correo y contraseña.'
+    );
+    return;
+  }
+
+  console.log('TIPO DE USUARIO:', tipoUsuario);
+
+  setCargando(true);
+
+  try {
+    console.log('ENVIANDO LOGIN:', {
+      tipoUsuario,
+      expediente: tipoUsuario === 'estudiante' ? expediente : undefined,
+      correo: tipoUsuario === 'nutriologa' ? correo : undefined,
+    });
+
+    const respuesta = await fetch(`${API_URL}/api/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        ...(tipoUsuario === 'estudiante'
+          ? { expediente: expediente.trim() }
+          : { correo: correo.trim().toLowerCase() }),
+        contrasena,
+      }),
+    });
+
+    const datos = await respuesta.json();
+
+    console.log('RESPUESTA DEL SERVIDOR:', datos);
+
+    if (!respuesta.ok) {
+      Alert.alert('Error', datos.mensaje);
+      return;
+    }
+
+    await AsyncStorage.setItem(
+      'usuario',
+      JSON.stringify(datos.usuario)
+    );
+Alert.alert('¡Bienvenid@!', datos.mensaje, [
+  {
+    text: 'Continuar',
+    onPress: () => {
+      if (datos.usuario.rol === 'nutriologa') {
+        router.replace('/nutriologa');
+      } else {
+        router.replace('/recordatorios');
+      }
+    },
+  },
+]);
+
+  } catch (error) {
+    console.log('ERROR LOGIN:', error);
+
+    Alert.alert(
+      'Error de conexión',
+      'No fue posible comunicarse con el servidor.'
+    );
+
+  } finally {
+    setCargando(false);
+  }
+};
+
+
   return (
     <View style={styles.container}>
 
@@ -27,26 +120,84 @@ export default function Login() {
       </Text>
 
       <Text style={styles.subtitulo}>
-        Inicia sesión en tu cuenta de TroyaFit 
+        Inicia sesión en tu cuenta de TroyaFit
       </Text>
+
+      {/* Selección de usuario */}
+      <View style={styles.selector}>
+
+        <TouchableOpacity
+          style={[
+            styles.opcion,
+            tipoUsuario === 'estudiante' && styles.opcionActiva,
+          ]}
+          onPress={() => setTipoUsuario('estudiante')}
+        >
+          <Text
+            style={[
+              styles.textoOpcion,
+              tipoUsuario === 'estudiante' && styles.textoOpcionActivo,
+            ]}
+          >
+            Estudiante
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[
+            styles.opcion,
+            tipoUsuario === 'nutriologa' && styles.opcionActiva,
+          ]}
+          onPress={() => setTipoUsuario('nutriologa')}
+        >
+          <Text
+            style={[
+              styles.textoOpcion,
+              tipoUsuario === 'nutriologa' && styles.textoOpcionActivo,
+            ]}
+          >
+            Nutrióloga
+          </Text>
+        </TouchableOpacity>
+
+      </View>
 
       {/* Tarjeta */}
       <View style={styles.tarjeta}>
 
-        {/* Expediente */}
+        {/* Identificador */}
         <Text style={styles.etiqueta}>
-          Expediente UAQ
+          {tipoUsuario === 'estudiante'
+            ? 'Expediente UAQ'
+            : 'Correo electrónico'}
         </Text>
 
         <TextInput
           style={styles.input}
-          placeholder="Ingresa tu expediente"
+          placeholder={
+            tipoUsuario === 'estudiante'
+              ? 'Ingresa tu expediente'
+              : 'Ingresa tu correo'
+          }
           placeholderTextColor="#999999"
-          keyboardType="numeric"
+          keyboardType={
+            tipoUsuario === 'estudiante'
+              ? 'numeric'
+              : 'email-address'
+          }
+          autoCapitalize="none"
+          value={tipoUsuario === 'estudiante' ? expediente : correo}
+          onChangeText={
+            tipoUsuario === 'estudiante'
+              ? setExpediente
+              : setCorreo
+          }
         />
 
         <Text style={styles.ayuda}>
-          Tu expediente es tu identificador como estudiante UAQ.
+          {tipoUsuario === 'estudiante'
+            ? 'Tu expediente es tu identificador como estudiante UAQ.'
+            : 'Ingresa el correo asignado a la nutrióloga.'}
         </Text>
 
         {/* Contraseña */}
@@ -59,6 +210,8 @@ export default function Login() {
           placeholder="Ingresa tu contraseña"
           placeholderTextColor="#999999"
           secureTextEntry
+          value={contrasena}
+          onChangeText={setContrasena}
         />
 
         {/* Recuperar contraseña */}
@@ -70,33 +223,36 @@ export default function Login() {
 
       </View>
 
-    
-{/* Botón */}
-<TouchableOpacity
-  style={styles.boton}
-  onPress={() => router.push('/recordatorios')}
->
-  <Text style={styles.textoBoton}>
-    Iniciar sesión
-  </Text>
-</TouchableOpacity>
-
-
-
-      {/* Registro */}
-      <View style={styles.registro}>
-        <Text style={styles.textoPregunta}>
-          ¿Aún no tienes una cuenta?
+      {/* Botón */}
+      <TouchableOpacity
+        style={[
+          styles.boton,
+          cargando && styles.botonDeshabilitado,
+        ]}
+        onPress={iniciarSesion}
+        disabled={cargando}
+      >
+        <Text style={styles.textoBoton}>
+          {cargando ? 'Iniciando sesión...' : 'Iniciar sesión'}
         </Text>
+      </TouchableOpacity>
 
-        <TouchableOpacity
-          onPress={() => router.push('/registro')}
-        >
-          <Text style={styles.crearCuenta}>
-            Crear una cuenta
+      {/* Registro: solamente estudiantes */}
+      {tipoUsuario === 'estudiante' && (
+        <View style={styles.registro}>
+          <Text style={styles.textoPregunta}>
+            ¿Aún no tienes una cuenta?
           </Text>
-        </TouchableOpacity>
-      </View>
+
+          <TouchableOpacity
+            onPress={() => router.push('/registro')}
+          >
+            <Text style={styles.crearCuenta}>
+              Crear una cuenta
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
     </View>
   );
@@ -140,7 +296,36 @@ const styles = StyleSheet.create({
   subtitulo: {
     fontSize: 15,
     color: '#666666',
-    marginBottom: 30,
+    marginBottom: 20,
+  },
+
+  selector: {
+    flexDirection: 'row',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 15,
+    padding: 5,
+    marginBottom: 18,
+  },
+
+  opcion: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+
+  opcionActiva: {
+    backgroundColor: '#4089C0',
+  },
+
+  textoOpcion: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#1F416A',
+  },
+
+  textoOpcionActivo: {
+    color: '#FFFFFF',
   },
 
   tarjeta: {
@@ -214,6 +399,10 @@ const styles = StyleSheet.create({
     shadowRadius: 5,
 
     elevation: 4,
+  },
+
+  botonDeshabilitado: {
+    opacity: 0.6,
   },
 
   textoBoton: {
