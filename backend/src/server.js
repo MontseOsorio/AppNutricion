@@ -2,6 +2,7 @@
 const express = require('express');
 const cors = require('cors');
 const prisma = require('./db');
+const { preguntarAzure } = require('./azure');
 
 const app = express();
 const PORT = 3000;
@@ -46,6 +47,31 @@ app.get('/api/estado-db', async (req, res) => {
         res.status(500).json({
             conectado: false,
             mensaje: 'No se pudo conectar con la base de datos'
+        });
+    }
+});
+
+// Probar conexión con Azure GPT-5-mini
+app.post('/api/ia/probar', async (req, res) => {
+    try {
+        const mensaje = req.body.mensaje ||
+            'Hola, soy TroyaFit. Preséntate brevemente en español.';
+
+        const respuesta = await preguntarAzure(mensaje);
+
+        res.json({
+            conectado: true,
+            mensaje: 'Conexión con Azure exitosa',
+            respuesta: respuesta
+        });
+
+    } catch (error) {
+        console.error('Error al consultar Azure:', error);
+
+        res.status(500).json({
+            conectado: false,
+            mensaje: 'No se pudo obtener una respuesta de Azure',
+            detalle: error.message
         });
     }
 });
