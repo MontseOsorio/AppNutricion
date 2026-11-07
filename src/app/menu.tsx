@@ -1,4 +1,6 @@
 import {
+  ActivityIndicator,
+  Alert,
   Image,
   ScrollView,
   StyleSheet,
@@ -7,18 +9,66 @@ import {
   View,
 } from 'react-native';
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function Menu() {
-
+  const [plan, setPlan] = useState<any>(null);
+  const [cargando, setCargando] = useState(true);
+  const [diaSeleccionado, setDiaSeleccionado] = useState(1);
   const [comidasAbiertas, setComidasAbiertas] = useState({
     desayuno: true,
     colacion: false,
     comida: false,
     cena: false,
   });
+  const API_URL = 'http://192.168.0.10:3000';
+  const diasSemana = [
+  { id: 1, nombre: 'Lun' },
+  { id: 2, nombre: 'Mar' },
+  { id: 3, nombre: 'Mié' },
+  { id: 4, nombre: 'Jue' },
+  { id: 5, nombre: 'Vie' },
+];
+  useEffect(() => {
+    const cargarMenu = async () => {
+      try {
+        const usuarioGuardado = await AsyncStorage.getItem('usuario');
 
+        if (!usuarioGuardado) {
+          Alert.alert('Sesión no encontrada', 'Inicia sesión nuevamente.');
+          return;
+        }
+
+        const usuario = JSON.parse(usuarioGuardado);
+
+        const respuesta = await fetch(
+          `${API_URL}/api/planes/estudiante/${usuario.id_usuario}`
+        );
+
+        if (!respuesta.ok) {
+          throw new Error('No se pudo consultar el menú.');
+        }
+
+        const planes = await respuesta.json();
+
+        const planPublicado = planes.find(
+          (p: any) => p.estado === 'activo'
+        );
+
+        setPlan(planPublicado || null);
+
+      } catch (error) {
+        console.error('Error al cargar menú:', error);
+        Alert.alert('Error', 'No se pudo cargar tu menú.');
+      } finally {
+        setCargando(false);
+      }
+    };
+
+    cargarMenu();
+  }, []);
   const cambiarComida = (comida: string) => {
     setComidasAbiertas({
       ...comidasAbiertas,
@@ -28,73 +78,77 @@ export default function Menu() {
     });
   };
 
-  const mostrarComida = (
-    titulo: string,
-    comida: string,
-    alimentos: string[],
-    calorias: string
-  ) => {
+    
+const mostrarComida = (
+  titulo: string,
+  comida: string,
+  tipo: string
+) => {
+  const abierta =
+    comidasAbiertas[
+      comida as keyof typeof comidasAbiertas
+    ];
 
-    const abierta =
-      comidasAbiertas[
-        comida as keyof typeof comidasAbiertas
-      ];
+  const comidasDelDia = plan?.comidas?.filter(
+    (c: any) =>
+      c.tipo === tipo &&
+      Number(c.dia_plan) === diaSeleccionado
+  ) || [];
 
-    return (
-      <View style={styles.tarjetaComida}>
+  return (
+    <View style={styles.tarjetaComida}>
+      <TouchableOpacity
+        style={styles.encabezadoComida}
+        onPress={() => cambiarComida(comida)}
+        activeOpacity={0.7}
+      >
+        <Text style={styles.tituloComida}>
+          {titulo}
+        </Text>
 
-        <TouchableOpacity
-          style={styles.encabezadoComida}
-          onPress={() => cambiarComida(comida)}
-          activeOpacity={0.7}
-        >
-
-          <Text style={styles.tituloComida}>
-            {titulo}
+        <View style={styles.ladoDerecho}>
+          <Text style={styles.flecha}>
+            {abierta ? '▲' : '▼'}
           </Text>
+        </View>
+      </TouchableOpacity>
 
-          <View style={styles.ladoDerecho}>
-
-            <Text style={styles.caloriasPequenas}>
-              {calorias}
+      {abierta && (
+        <View style={styles.listaAlimentos}>
+          {comidasDelDia.length === 0 ? (
+            <Text style={styles.textoSinComida}>
+              No tienes alimentos registrados para este tiempo de comida. 🥗
             </Text>
+          ) : (
+            comidasDelDia.map((c: any) => (
+              <View key={c.id_comida}>
+                {c.detalle_comidas.map((detalle: any) => (
+                  <View
+                    key={detalle.id_detalle_comida}
+                    style={styles.alimento}
+                  >
+                    <Text style={styles.punto}>•</Text>
 
-            <Text style={styles.flecha}>
-              {abierta ? '▲' : '▼'}
-            </Text>
+                    <Text style={styles.textoAlimento}>
+                      {detalle.alimento.nombre} - {detalle.cantidad} {detalle.unidad}
+                    </Text>
+                  </View>
+                ))}
 
-          </View>
-
-        </TouchableOpacity>
-
-        {abierta && (
-          <View style={styles.listaAlimentos}>
-
-            {alimentos.map((alimento, index) => (
-              <View
-                key={index}
-                style={styles.alimento}
-              >
-                <Text style={styles.punto}>
-                  •
-                </Text>
-
-                <Text style={styles.textoAlimento}>
-                  {alimento}
-                </Text>
+                {c.instrucciones ? (
+                  <Text style={styles.textoAlimento}>
+                    Indicaciones: {c.instrucciones}
+                  </Text>
+                ) : null}
               </View>
-            ))}
+            ))
+          )}
+        </View>
+      )}
+    </View>
+  );
+};
 
-            <Text style={styles.calorias}>
-              {calorias}
-            </Text>
-
-          </View>
-        )}
-
-      </View>
-    );
-  };
 
   return (
     <View style={styles.container}>
@@ -185,8 +239,10 @@ export default function Menu() {
 
           <View style={styles.caloriasTotales}>
             <Text style={styles.numeroCalorias}>
-              1,570
-            </Text>
+  {plan?.calorias_objetivo
+    ? plan.calorias_objetivo.toLocaleString('es-MX')
+    : '--'}
+</Text>
 
             <Text style={styles.kcal}>
               kcal
@@ -194,72 +250,63 @@ export default function Menu() {
           </View>
 
         </View>
-
-        {/* Desayuno */}
-        {mostrarComida(
-          '☀️  Desayuno',
-          'desayuno',
-          [
-            '2 huevos a la mexicana',
-            '2 tortillas',
-            'Aguacate',
-          ],
-          '420 kcal'
-        )}
-
-        {/* Colación */}
-        {mostrarComida(
-          '🍎  Colación',
-          'colacion',
-          [
-            'Avena',
-            'Plátano',
-            'Canela',
-          ],
-          '250 kcal'
-        )}
-
-        {/* Comida */}
-        {mostrarComida(
-          '🍽️  Comida',
-          'comida',
-          [
-            'Pechuga de pollo',
-            'Arroz',
-            'Ensalada de verduras',
-          ],
-          '550 kcal'
-        )}
-
-        {/* Cena */}
-        {mostrarComida(
-          '🌙  Cena',
-          'cena',
-          [
-            'Tostadas de pollo',
-            'Lechuga',
-            'Aguacate',
-          ],
-          '350 kcal'
-        )}
-
-        {/* Mensaje */}
-        <View style={styles.mensaje}>
-
-          <Text style={styles.mensajeTexto}>
-            ¡Vas muy bien, no te rindas!
+                {cargando ? (
+          <ActivityIndicator size="large" color="#4089C0" />
+        ) : !plan ? (
+          <View style={styles.mensaje}>
+            <Text style={styles.mensajeTexto}>
+              Aún no tienes un menú publicado.
+            </Text>
+            <Text style={styles.mensajeSubtexto}>
+              Cuando tu nutrióloga publique tu plan, aparecerá aquí.
+            </Text>
+          </View>
+       ) : (
+  <>
+    <View style={styles.contenedorDias}>
+      {diasSemana.map((dia) => (
+        <TouchableOpacity
+          key={dia.id}
+          style={[
+            styles.botonDia,
+            diaSeleccionado === dia.id && styles.botonDiaActivo,
+          ]}
+          onPress={() => setDiaSeleccionado(dia.id)}
+        >
+          <Text
+            style={[
+              styles.textoDia,
+              diaSeleccionado === dia.id && styles.textoDiaActivo,
+            ]}
+          >
+            {dia.nombre}
           </Text>
+        </TouchableOpacity>
+      ))}
+    </View>
 
-          <Text style={styles.mensajeSubtexto}>
-            Sigue tu plan y mantente hidratado.
-          </Text>
+    {mostrarComida('☀️ Desayuno', 'desayuno', 'desayuno')}
+    {mostrarComida('🍎 Colación', 'colacion', 'colacion')}
+    {mostrarComida('🍽️ Comida', 'comida', 'comida')}
+    {mostrarComida('🌙 Cena', 'cena', 'cena')}
+  </>
+)}
+        
+       {/* Mensaje */}
+{plan && (
+  <View style={styles.mensaje}>
+    <Text style={styles.mensajeTexto}>
+      ¡Vas muy bien, no te rindas!
+    </Text>
 
-        </View>
+    <Text style={styles.mensajeSubtexto}>
+      Sigue tu plan y mantente hidratado.
+    </Text>
+  </View>
+)}
 
       </ScrollView>
-          <TouchableOpacity onPress={() => router.push('/cocina')}>
-  <Text>Mi cocina 🍳</Text>
-</TouchableOpacity>
+         
     </View>
   );
 }
@@ -550,5 +597,42 @@ const styles = StyleSheet.create({
     color: '#4089C0',
     marginLeft: 8,
   },
+  contenedorDias: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  marginBottom: 18,
+  marginTop: 8,
+  gap: 8,
+},
 
+botonDia: {
+  flex: 1,
+  backgroundColor: '#FFFFFF',
+  borderRadius: 15,
+  paddingVertical: 12,
+  alignItems: 'center',
+  borderWidth: 1,
+  borderColor: '#DCE5EC',
+},
+
+botonDiaActivo: {
+  backgroundColor: '#4089C0',
+  borderColor: '#4089C0',
+},
+
+textoDia: {
+  fontSize: 13,
+  fontWeight: '700',
+  color: '#1F416A',
+},
+
+textoDiaActivo: {
+  color: '#FFFFFF',
+},
+textoSinComida: {
+  fontSize: 12,
+  color: '#888888',
+  textAlign: 'center',
+  paddingVertical: 12,
+},
 });

@@ -1,6 +1,7 @@
 
 import {
   Image,
+  ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -43,9 +44,11 @@ export default function Recordatorios() {
   };
 
   const totalTomadas = tomas.filter(Boolean).length;
-
-  return (
-    <View style={styles.container}>
+    return (
+  <ScrollView
+    style={{ flex: 1 }}
+    contentContainerStyle={styles.container}
+  >
         
 
       {/* Título */}
@@ -160,17 +163,24 @@ export default function Recordatorios() {
     📋 Mis citas
   </Text>
 </TouchableOpacity>
+{/* Botón para consultar menú */}
+<TouchableOpacity
+  style={styles.botonMisCitas}
+  onPress={() => router.push('/menu')}
+>
+  <Text style={styles.botonMisCitasTexto}>
+    🍽️ Mi menú alimenticio
+  </Text>
+</TouchableOpacity>
 
 
-
-    </View>
+     </ScrollView>
   );
-}
+} 
 
 const styles = StyleSheet.create({
 
   container: {
-    flex: 1,
     backgroundColor: '#f1e8cf',
     paddingHorizontal: 22,
     paddingTop: 55,

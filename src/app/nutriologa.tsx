@@ -50,9 +50,12 @@ export default function Nutriologa() {
         <Text style={styles.descripcion}>
           Diseña y envía planes alimenticios a cada estudiante.
         </Text>
-        <TouchableOpacity style={styles.boton}>
-          <Text style={styles.textoBoton}>Administrar menús</Text>
-        </TouchableOpacity>
+        <TouchableOpacity
+  style={styles.boton}
+  onPress={() => router.push('/menus-nutriologa')}
+>
+  <Text style={styles.textoBoton}>Administrar menús</Text>
+</TouchableOpacity>
       </View>
 
       <View style={styles.tarjeta}>

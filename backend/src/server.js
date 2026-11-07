@@ -2,7 +2,7 @@
 const express = require('express');
 const cors = require('cors');
 const prisma = require('./db');
-const { preguntarAzure } = require('./azure');
+
 
 const app = express();
 const PORT = 3000;
@@ -54,6 +54,7 @@ app.get('/api/estado-db', async (req, res) => {
 // Probar conexión con Azure GPT-5-mini
 app.post('/api/ia/probar', async (req, res) => {
     try {
+        const { preguntarAzure } = require('./azure');
         const mensaje = req.body.mensaje ||
             'Hola, soy TroyaFit. Preséntate brevemente en español.';
 

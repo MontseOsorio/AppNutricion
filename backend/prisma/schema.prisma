@@ -23,6 +23,7 @@ model alimentos {
   activo          Boolean @default(true)
 
   @@index([nombre], map: "idx_alimentos_nombre")
+  detalles_comidas detalle_comidas[]
 }
 
 model citas {
@@ -48,7 +49,8 @@ model comidas {
   dia_plan      Int          @default(1) @db.UnsignedTinyInt
   hora_sugerida DateTime?    @db.Time(0)
   instrucciones String?      @db.Text
-
+  plan planes_alimenticios @relation(fields: [id_plan], references: [id_plan])
+detalle_comidas detalle_comidas[]
   @@index([id_plan, dia_plan], map: "idx_comidas_plan_dia")
 }
 
@@ -75,7 +77,8 @@ model detalle_comidas {
   cantidad          Decimal @db.Decimal(8, 2)
   unidad            String  @db.VarChar(30)
   indicaciones      String? @db.Text
-
+  comida comidas @relation(fields: [id_comida], references: [id_comida])
+alimento alimentos @relation(fields: [id_alimento], references: [id_alimento])
   @@index([id_alimento], map: "id_alimento")
   @@index([id_comida], map: "idx_detalle_comidas")
 }
@@ -222,7 +225,7 @@ model planes_alimenticios {
   calorias_objetivo Int?                       @db.UnsignedInt
   estado            planes_alimenticios_estado @default(borrador)
   fecha_creacion    DateTime                   @default(now()) @db.Timestamp(0)
-
+  comidas comidas[]
   @@index([id_nutriologa], map: "id_nutriologa")
   @@index([id_estudiante, estado], map: "idx_planes_estudiante_estado")
 }

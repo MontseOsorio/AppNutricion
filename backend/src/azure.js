@@ -17,7 +17,7 @@ if (!process.env.AZURE_OPENAI_ENDPOINT ||
 
 // Crear el cliente de Azure
 const client = new OpenAI({
-    baseURL: process.env.AZURE_OPENAI_ENDPOINT,
+    baseURL: `${process.env.AZURE_OPENAI_ENDPOINT}/openai/v1`,
     apiKey: process.env.AZURE_OPENAI_API_KEY
 });
 

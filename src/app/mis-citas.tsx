@@ -3,13 +3,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
 const API_URL = 'http://192.168.0.10:3000';
@@ -105,12 +105,7 @@ export default function MisCitas() {
             <Text style={styles.textoVacio}>
               Aún no tienes citas registradas.
             </Text>
-            <TouchableOpacity
-              style={styles.botonAgendar}
-              onPress={() => router.push('/cita')}
-            >
-              <Text style={styles.textoBoton}>Agendar cita</Text>
-            </TouchableOpacity>
+    
           </View>
         ) : (
           citas.map((cita) => {
@@ -143,6 +138,14 @@ export default function MisCitas() {
               </View>
             );
           })
+        )}
+                   {!cargando && (
+          <TouchableOpacity
+            style={styles.botonAgendar}
+            onPress={() => router.push('/cita')}
+          >
+            <Text style={styles.textoBoton}>📅 Agendar nueva cita</Text>
+          </TouchableOpacity>
         )}
       </ScrollView>
     </View>
