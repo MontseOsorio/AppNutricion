@@ -40,7 +40,31 @@ type ComidaPlan = {
     };
   }[];
 };
+type IngredientePropuesto = {
+  nombre: string;
+  cantidad: number;
+  unidad: string;
+  id_alimento: number | null;
+  en_catalogo: boolean;
+  estado: string;
+};
 
+type ComidaPropuesta = {
+  tipo: string;
+  nombre: string;
+  instrucciones?: string;
+  ingredientes: IngredientePropuesto[];
+};
+
+type DiaPropuesto = {
+  dia: number;
+  comidas: ComidaPropuesta[];
+};
+
+type PropuestaMenu = {
+  dias: DiaPropuesto[];
+  observaciones?: string[];
+};
 const API_URL = 'http://192.168.0.10:3000';
 const ID_NUTRIOLOGA = 2;
 
@@ -80,7 +104,13 @@ export default function CrearPlan() {
   const [alimentosComida, setAlimentosComida] = useState<AlimentoComida[]>([]);
   const [idComidaEditando, setIdComidaEditando] = useState<number | null>(null);
   const [guardandoComida, setGuardandoComida] = useState(false);
-
+  // Estados para generar menús con Azure AI
+const [diasIA, setDiasIA] = useState('5');
+const [preferenciasIA, setPreferenciasIA] = useState('');
+const [restriccionesIA, setRestriccionesIA] = useState('');
+const [indicacionesIA, setIndicacionesIA] = useState('');
+const [propuestaIA, setPropuestaIA] = useState<PropuestaMenu | null>(null);
+const [generandoIA, setGenerandoIA] = useState(false);
   // Cargar alimentos y recuperar el plan existente.
   useEffect(() => {
     cargarAlimentos();
@@ -355,7 +385,51 @@ export default function CrearPlan() {
       setGuardandoComida(false);
     }
   };
+  const generarMenuIA = async () => {
+  if (!calorias.trim() || Number(calorias) <= 0) {
+    Alert.alert('Atención', 'Ingresa primero las calorías objetivo del menú.');
+    return;
+  }
 
+  try {
+    setGenerandoIA(true);
+    setPropuestaIA(null);
+
+    const respuesta = await fetch(`${API_URL}/api/ia/generar-menu`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        caloriasObjetivo: Number(calorias),
+        dias: Number(diasIA),
+        preferencias: preferenciasIA,
+        restricciones: restriccionesIA,
+        indicaciones: indicacionesIA,
+      }),
+    });
+
+    const datos = await respuesta.json();
+
+    if (!respuesta.ok || !datos.generado) {
+      throw new Error(datos.mensaje || 'No se pudo generar el menú.');
+    }
+
+    setPropuestaIA(datos.propuesta);
+
+    Alert.alert(
+      '¡Menú generado!',
+      'La propuesta está lista. Revisa los alimentos antes de incorporarlos al plan.'
+    );
+  } catch (error: any) {
+    Alert.alert(
+      'Error',
+      error.message || 'Ocurrió un problema al generar el menú.'
+    );
+  } finally {
+    setGenerandoIA(false);
+  }
+};
   const guardarPlan = async () => {
     if (idPlan || guardandoPlan) return;
 

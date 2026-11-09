@@ -13,6 +13,7 @@ const citasRoutes = require('./routes/citas');
 const planesRoutes = require('./routes/planes');
 const medicionesRoutes = require('./routes/mediciones');
 const consultasRoutes = require('./routes/consultas');
+const iaRoutes = require('./routes/ia');
 // Configuración del servidor
 app.use(cors());
 app.use(express.json());
@@ -23,7 +24,7 @@ app.use('/api/citas', citasRoutes);
 app.use('/api/planes', planesRoutes);
 app.use('/api/mediciones', medicionesRoutes);
 app.use('/api/consultas', consultasRoutes);
-
+app.use('/api/ia', iaRoutes);
 
 // Ruta principal
 app.get('/', (req, res) => {
