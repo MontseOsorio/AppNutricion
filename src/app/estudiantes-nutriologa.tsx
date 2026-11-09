@@ -1,16 +1,16 @@
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
-const API_URL = 'http://192.168.0.10:3000';
+const API_URL = 'http://148.220.210.243:3000';
 
 interface Estudiante {
   id_usuario: number;
