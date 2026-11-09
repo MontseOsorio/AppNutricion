@@ -23,7 +23,7 @@ export default function Menu() {
     comida: false,
     cena: false,
   });
-  const API_URL = 'http://192.168.0.10:3000';
+  const API_URL = 'http://148.220.213.109:3000';
   const diasSemana = [
   { id: 1, nombre: 'Lun' },
   { id: 2, nombre: 'Mar' },

@@ -65,7 +65,7 @@ type PropuestaMenu = {
   dias: DiaPropuesto[];
   observaciones?: string[];
 };
-const API_URL = 'http://192.168.0.10:3000';
+const API_URL = 'http://148.220.213.109:3000';
 const ID_NUTRIOLOGA = 2;
 
 const diasSemana = [
@@ -111,6 +111,8 @@ const [restriccionesIA, setRestriccionesIA] = useState('');
 const [indicacionesIA, setIndicacionesIA] = useState('');
 const [propuestaIA, setPropuestaIA] = useState<PropuestaMenu | null>(null);
 const [generandoIA, setGenerandoIA] = useState(false);
+const [guardandoPropuestaIA, setGuardandoPropuestaIA] = useState(false);
+const [propuestaImportada, setPropuestaImportada] = useState(false);
   // Cargar alimentos y recuperar el plan existente.
   useEffect(() => {
     cargarAlimentos();
@@ -430,6 +432,134 @@ const [generandoIA, setGenerandoIA] = useState(false);
     setGenerandoIA(false);
   }
 };
+    const guardarPropuestaCompleta = async () => {
+  if (!idPlan) {
+    Alert.alert(
+      'Plan no guardado',
+      'Primero guarda la información general del plan.'
+    );
+    return;
+  }
+
+  if (!propuestaIA || propuestaIA.dias.length === 0) {
+    Alert.alert('Sin propuesta', 'Primero genera un menú con IA.');
+    return;
+  }
+
+  if (propuestaImportada || guardandoPropuestaIA) {
+    return;
+  }
+
+  // Revisar que todos los ingredientes existan en el catálogo.
+  const pendientes = propuestaIA.dias.flatMap(dia =>
+    dia.comidas.flatMap(comida =>
+      comida.ingredientes
+        .filter(ingrediente => !ingrediente.id_alimento)
+        .map(ingrediente => ingrediente.nombre)
+    )
+  );
+
+  if (pendientes.length > 0) {
+    Alert.alert(
+      'Ingredientes pendientes',
+      `Estos ingredientes necesitan revisión antes de guardar el menú:\n\n${[...new Set(pendientes)].join(', ')}`
+    );
+    return;
+  }
+
+  const totalComidas = propuestaIA.dias.reduce(
+    (total, dia) => total + dia.comidas.length,
+    0
+  );
+
+  Alert.alert(
+    'Guardar menú completo',
+    `Se agregarán ${totalComidas} comidas al plan alimenticio. ¿Deseas continuar?`,
+    [
+      {
+        text: 'Cancelar',
+        style: 'cancel',
+      },
+      {
+        text: 'Guardar',
+        onPress: async () => {
+          try {
+            setGuardandoPropuestaIA(true);
+
+            let comidasGuardadas = 0;
+
+            for (const dia of propuestaIA.dias) {
+              for (const comida of dia.comidas) {
+                const respuesta = await fetch(
+                  `${API_URL}/api/planes/${idPlan}/comidas`,
+                  {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                      nombre: comida.nombre,
+                     tipo: (() => {
+  const tipo = comida.tipo
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+
+  if (tipo.includes('desayuno')) return 'desayuno';
+  if (tipo.includes('cena')) return 'cena';
+  if (tipo.includes('colacion') || tipo.includes('snack')) return 'colacion';
+
+  return 'comida';
+})(),
+                      dia_plan: dia.dia,
+                      instrucciones: comida.instrucciones || null,
+                      alimentos: comida.ingredientes.map(ingrediente => ({
+                        id_alimento: ingrediente.id_alimento,
+                        cantidad: ingrediente.cantidad,
+                        unidad: ingrediente.unidad,
+                      })),
+                    }),
+                  }
+                );
+
+                const datos = await respuesta.json();
+
+                if (!respuesta.ok) {
+                  throw new Error(
+                    datos.mensaje || `No se pudo guardar: ${comida.nombre}`
+                  );
+                }
+
+                comidasGuardadas++;
+              }
+            }
+
+            await actualizarListaComidas();
+
+            setPropuestaImportada(true);
+
+            Alert.alert(
+              '¡Menú guardado!',
+              `Se agregaron ${comidasGuardadas} comidas al plan. Ahora puedes revisar los días y publicar el menú.`
+            );
+
+          } catch (error) {
+            console.error('Error al guardar propuesta:', error);
+
+            Alert.alert(
+              'Error al guardar',
+              error instanceof Error
+                ? error.message
+                : 'No se pudo guardar el menú completo.'
+            );
+          } finally {
+            setGuardandoPropuestaIA(false);
+          }
+        },
+      },
+    ]
+  );
+};
   const guardarPlan = async () => {
     if (idPlan || guardandoPlan) return;
 
@@ -627,7 +757,174 @@ const [generandoIA, setGenerandoIA] = useState(false);
           keyboardType="numeric"
         />
       </View>
+            {/* Generador de menús con Azure AI */}
+      <View style={styles.card}>
+        <Text style={styles.seccion}>✨ Generar menú con IA</Text>
 
+        <Text style={styles.detalle}>
+          Crea una propuesta de menú personalizada utilizando inteligencia artificial.
+        </Text>
+
+        <Text style={styles.label}>Número de días</Text>
+        <View style={styles.diasContainer}>
+          {['1', '2', '3', '4', '5'].map(dia => (
+            <TouchableOpacity
+              key={dia}
+              style={[
+                styles.botonDia,
+                diasIA === dia && styles.botonDiaSeleccionado,
+              ]}
+              onPress={() => setDiasIA(dia)}
+            >
+              <Text
+                style={[
+                  styles.textoDia,
+                  diasIA === dia && styles.textoDiaSeleccionado,
+                ]}
+              >
+                {dia}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <Text style={styles.label}>Preferencias alimenticias</Text>
+        <TextInput
+          style={[styles.input, styles.multilinea]}
+          placeholder="Ej. Comidas variadas, económicas..."
+          value={preferenciasIA}
+          onChangeText={setPreferenciasIA}
+          multiline
+        />
+
+        <Text style={styles.label}>Restricciones alimenticias</Text>
+        <TextInput
+          style={[styles.input, styles.multilinea]}
+          placeholder="Ej. Sin lactosa, sin cacahuates..."
+          value={restriccionesIA}
+          onChangeText={setRestriccionesIA}
+          multiline
+        />
+
+        <Text style={styles.label}>Indicaciones adicionales</Text>
+        <TextInput
+          style={[styles.input, styles.multilinea]}
+          placeholder="Ej. Incluir pollo, pescado, verduras..."
+          value={indicacionesIA}
+          onChangeText={setIndicacionesIA}
+          multiline
+        />
+
+        <TouchableOpacity
+          style={[
+            styles.boton,
+            styles.botonInterno,
+            generandoIA && { opacity: 0.6 },
+          ]}
+          onPress={generarMenuIA}
+          disabled={generandoIA}
+        >
+          <Text style={styles.textoBoton}>
+            {generandoIA ? 'Generando menú...' : '✨ Generar propuesta'}
+          </Text>
+        </TouchableOpacity>
+
+        {propuestaIA && (
+          <View style={{ marginTop: 22 }}>
+            <Text style={styles.seccion}>Propuesta generada</Text>
+
+            {propuestaIA.dias.map((dia, indice) => (
+              <View key={indice} style={styles.grupoDia}>
+                <Text style={styles.diaTitulo}>
+                  {diasSemana[dia.dia - 1] || `Día ${dia.dia}`}
+                </Text>
+
+                {dia.comidas.map((comida, indiceComida) => (
+                  <View
+                    key={indiceComida}
+                    style={{
+                      backgroundColor: '#F8F8F8',
+                      padding: 12,
+                      borderRadius: 11,
+                      marginBottom: 10,
+                    }}
+                  >
+                    <Text style={styles.comidaNombre}>
+                      {comida.nombre}
+                    </Text>
+
+                    <Text style={styles.comidaDetalle}>
+                      {comida.tipo}
+                    </Text>
+
+                    {comida.ingredientes.map((ingrediente, index) => (
+                      <Text key={index} style={styles.alimentoDetalle}>
+                        • {ingrediente.nombre}: {ingrediente.cantidad}{' '}
+                        {ingrediente.unidad}
+                      </Text>
+                    ))}
+
+                    {comida.ingredientes.some(
+                      ingrediente => !ingrediente.en_catalogo
+                    ) && (
+                      <Text
+                        style={{
+                          color: '#B7791F',
+                          fontSize: 12,
+                          marginTop: 8,
+                          fontWeight: '600',
+                        }}
+                      >
+                        Algunos ingredientes no están en el catálogo y requieren revisión.
+                      </Text>
+                    )}
+
+                    {comida.instrucciones ? (
+                      <Text style={styles.comidaDetalle}>
+                        Preparación: {comida.instrucciones}
+                      </Text>
+                    ) : null}
+                  </View>
+                ))}
+              </View>
+            ))}
+
+            {Array.isArray(propuestaIA.observaciones) ? (
+  propuestaIA.observaciones.map((observacion, index) => (
+    <Text key={index} style={styles.detalle}>
+      • {observacion}
+    </Text>
+  ))
+) : propuestaIA.observaciones ? (
+  <Text style={styles.detalle}>
+    {String(propuestaIA.observaciones)}
+  </Text>
+) : null}
+                <TouchableOpacity
+              style={[
+                styles.boton,
+                styles.botonInterno,
+                {
+                  backgroundColor: '#1F416A',
+                  marginTop: 18,
+                  opacity: guardandoPropuestaIA || propuestaImportada ? 0.6 : 1,
+                },
+              ]}
+              onPress={guardarPropuestaCompleta}
+              disabled={guardandoPropuestaIA || propuestaImportada}
+            >
+              <Text style={styles.textoBoton}>
+                {guardandoPropuestaIA
+                  ? 'Guardando menú completo...'
+                  : propuestaImportada
+                    ? '✓ Menú agregado al plan'
+                    : 'Guardar menú completo en el plan'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+      </View>
       {/* Lista de comidas que ya tiene el plan */}
       {idPlan !== null && (
         <View style={styles.card}>

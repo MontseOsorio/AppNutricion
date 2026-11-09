@@ -2,16 +2,16 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import {
-    Alert,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
-const API_URL = 'http://192.168.0.10:3000';
+const API_URL = 'http://148.220.213.109:3000';
 const ID_NUTRIOLOGA = 2;
 
 export default function RegistrarConsulta() {
