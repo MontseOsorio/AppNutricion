@@ -172,7 +172,14 @@ export default function Recordatorios() {
     🍽️ Mi menú alimenticio
   </Text>
 </TouchableOpacity>
-
+<TouchableOpacity
+  style={styles.botonMisCitas}
+  onPress={() => router.push('/compras')}
+>
+  <Text style={styles.botonMisCitasTexto}>
+    🛒 Lista de compras
+  </Text>
+</TouchableOpacity>
 
      </ScrollView>
   );
@@ -181,10 +188,12 @@ export default function Recordatorios() {
 const styles = StyleSheet.create({
 
   container: {
-    backgroundColor: '#f1e8cf',
-    paddingHorizontal: 22,
-    paddingTop: 55,
-  },
+  backgroundColor: '#f1e8cf',
+  paddingHorizontal: 22,
+  paddingTop: 55,
+  paddingBottom: 80,
+  flexGrow: 1,
+},
 
   titulo: {
     fontSize: 30,
@@ -261,12 +270,12 @@ const styles = StyleSheet.create({
   },
 
   /* Troyano con sed */
-  troyanoSed: {
-    width: 700,
-    height: 240,
-    alignSelf: 'center',
-    marginVertical: 3,
-  },
+ troyanoSed: {
+  width: '100%',
+  height: 200,
+  alignSelf: 'center',
+  marginVertical: 3,
+},
 
   contenedorBotellas: {
     flexDirection: 'row',

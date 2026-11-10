@@ -11,7 +11,7 @@ import {
   View,
 } from 'react-native';
 
-const API_URL = 'http://148.220.210.243:3000';
+const API_URL = 'http://192.168.0.10:3000';
 
 interface Consulta {
   id_consulta: number;

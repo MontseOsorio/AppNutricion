@@ -1,127 +1,70 @@
 import {
-    Image,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+
+const API_URL = 'http://192.168.0.10:3000';
 
 export default function Compras() {
 
-  const [productos, setProductos] = useState([
-    // Proteínas
-    {
-      id: 1,
-      nombre: 'Pechuga de pollo',
-      cantidad: '1 kg',
-      categoria: 'proteinas',
-      comprado: false,
-    },
-    {
-      id: 2,
-      nombre: 'Huevos',
-      cantidad: '12 piezas',
-      categoria: 'proteinas',
-      comprado: false,
-    },
-    {
-      id: 3,
-      nombre: 'Atún',
-      cantidad: '3 latas',
-      categoria: 'proteinas',
-      comprado: false,
-    },
+  const [productos, setProductos] = useState<any[]>([]);
+  useEffect(() => {
+  const cargarProductos = async () => {
+    try {
+      const usuarioGuardado = await AsyncStorage.getItem('usuario');
 
-    // Frutas
-    {
-      id: 4,
-      nombre: 'Plátano',
-      cantidad: '6 piezas',
-      categoria: 'frutas',
-      comprado: false,
-    },
-    {
-      id: 5,
-      nombre: 'Manzana',
-      cantidad: '4 piezas',
-      categoria: 'frutas',
-      comprado: false,
-    },
-    {
-      id: 6,
-      nombre: 'Fresas',
-      cantidad: '500 g',
-      categoria: 'frutas',
-      comprado: false,
-    },
+      if (!usuarioGuardado) {
+        console.log('No se encontró el usuario');
+        return;
+      }
 
-    // Verduras
-    {
-      id: 7,
-      nombre: 'Tomate',
-      cantidad: '6 piezas',
-      categoria: 'verduras',
-      comprado: false,
-    },
-    {
-      id: 8,
-      nombre: 'Espinaca',
-      cantidad: '1 bolsa',
-      categoria: 'verduras',
-      comprado: false,
-    },
-    {
-      id: 9,
-      nombre: 'Zanahoria',
-      cantidad: '5 piezas',
-      categoria: 'verduras',
-      comprado: false,
-    },
+      const usuario = JSON.parse(usuarioGuardado);
 
-    // Cereales
-    {
-      id: 10,
-      nombre: 'Avena',
-      cantidad: '500 g',
-      categoria: 'cereales',
-      comprado: false,
-    },
-    {
-      id: 11,
-      nombre: 'Tortillas',
-      cantidad: '1 kg',
-      categoria: 'cereales',
-      comprado: false,
-    },
-    {
-      id: 12,
-      nombre: 'Arroz',
-      cantidad: '1 kg',
-      categoria: 'cereales',
-      comprado: false,
-    },
+      const respuesta = await fetch(
+        `${API_URL}/api/compras/generar/${usuario.id_usuario}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
 
-    // Lácteos
-    {
-      id: 13,
-      nombre: 'Yogur natural',
-      cantidad: '1 litro',
-      categoria: 'lacteos',
-      comprado: false,
-    },
-    {
-      id: 14,
-      nombre: 'Leche',
-      cantidad: '1 litro',
-      categoria: 'lacteos',
-      comprado: false,
-    },
-  ]);
+      const datos = await respuesta.json();
 
+      if (!respuesta.ok) {
+        console.log('Error al cargar compras:', datos);
+        return;
+      }
+
+      const lista = datos.productos.map((producto: any) => ({
+        id: producto.id_detalle_lista,
+        nombre: producto.producto,
+        cantidad: `${producto.cantidad} ${producto.unidad}`,
+        categoria: (producto.categoria || 'otros')
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .toLowerCase(),
+        comprado: producto.comprado,
+      }));
+
+      setProductos(lista);
+
+    } catch (error) {
+      console.log('Error al conectar con compras:', error);
+    }
+  };
+
+  cargarProductos();
+}, []);
   // Proteínas empieza abierta
   const [categoriasAbiertas, setCategoriasAbiertas] = useState({
     proteinas: true,
@@ -292,16 +235,15 @@ export default function Compras() {
           </View>
 
         </View>
-                ```tsx
+              
 <TouchableOpacity
   style={styles.botonMenu}
   onPress={() => router.push('/perfil')}
 >
-  <Text style={styles.textoBotonMenu}>
+   <Text style={styles.textoBotonMenu}>
     🥗 Ver mi menú
   </Text>
 </TouchableOpacity>
-```
 
         {/* Categorías */}
 

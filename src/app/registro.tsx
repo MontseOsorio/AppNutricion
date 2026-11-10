@@ -12,7 +12,7 @@ import {
 import { router } from 'expo-router';
 import { useState } from 'react';
 
-const API_URL = 'http://148.220.210.243:3000';
+const API_URL = 'http://192.168.0.10:3000';
 
 export default function Registro() {
 
