@@ -1,6 +1,5 @@
 const express = require('express');
 const router = express.Router();
-const { preguntarAzure } = require('../azure');
 const prisma = require('../db');
 // Generar una propuesta de menú con Azure AI
 router.post('/generar-menu', async (req, res) => {
@@ -96,7 +95,7 @@ con esta estructura:
   "observaciones": "Propuesta pendiente de revisión profesional."
 }
 `;
-
+        const { preguntarAzure } = require('../azure');
         const respuesta = await preguntarAzure(prompt);
         console.log('MENÚ GENERADO POR AZURE:', respuesta);
         // Clasificar ingredientes según el catálogo de TroyaFit

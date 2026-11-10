@@ -74,18 +74,43 @@ export default function Compras() {
     lacteos: false,
   });
 
-  const marcarProducto = (id: number) => {
-    setProductos(
-      productos.map((producto) =>
+  const marcarProducto = async (id: number) => {
+  const productoActual = productos.find((p) => p.id === id);
+
+  if (!productoActual) return;
+
+  const nuevoEstado = !productoActual.comprado;
+
+  try {
+    const respuesta = await fetch(
+      `${API_URL}/api/compras/producto/${id}`,
+      {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          comprado: nuevoEstado,
+        }),
+      }
+    );
+
+    if (!respuesta.ok) {
+      throw new Error('No se pudo actualizar el producto');
+    }
+
+    setProductos((productosAnteriores) =>
+      productosAnteriores.map((producto) =>
         producto.id === id
-          ? {
-              ...producto,
-              comprado: !producto.comprado,
-            }
+          ? { ...producto, comprado: nuevoEstado }
           : producto
       )
     );
-  };
+  } catch (error) {
+    console.error('Error al marcar producto:', error);
+    alert('No se pudo guardar el cambio. Intenta nuevamente.');
+  }
+};
 
   const cambiarCategoria = (categoria: string) => {
     setCategoriasAbiertas({

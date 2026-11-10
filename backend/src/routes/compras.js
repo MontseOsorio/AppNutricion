@@ -15,7 +15,6 @@ router.post('/generar/:id_estudiante', async (req, res) => {
             });
         }
 
-        // Buscar el menú publicado del estudiante
         const plan = await prisma.planes_alimenticios.findFirst({
             where: {
                 id_estudiante,
@@ -79,7 +78,7 @@ router.post('/generar/:id_estudiante', async (req, res) => {
         // Guardar o actualizar la lista de compras
         const lista = await prisma.$transaction(async (tx) => {
 
-            let listaExistente = await tx.listas_compras.findFirst({
+            const listaExistente = await tx.listas_compras.findFirst({
                 where: {
                     id_estudiante,
                     id_plan: plan.id_plan
@@ -90,9 +89,21 @@ router.post('/generar/:id_estudiante', async (req, res) => {
             });
 
             let id_lista;
+            const estadosAnteriores = new Map();
 
             if (listaExistente) {
                 id_lista = listaExistente.id_lista;
+
+                const productosAnteriores = await tx.detalle_lista_compras.findMany({
+                    where: { id_lista }
+                });
+
+                productosAnteriores.forEach(item => {
+                    estadosAnteriores.set(
+                        `${item.id_alimento}-${item.unidad}`,
+                        item.comprado
+                    );
+                });
 
                 await tx.detalle_lista_compras.deleteMany({
                     where: { id_lista }
@@ -125,7 +136,9 @@ router.post('/generar/:id_estudiante', async (req, res) => {
                     producto: producto.producto,
                     cantidad: producto.cantidad,
                     unidad: producto.unidad,
-                    comprado: false
+                    comprado: estadosAnteriores.get(
+                        `${producto.id_alimento}-${producto.unidad}`
+                    ) ?? false
                 }))
             });
 
@@ -135,7 +148,7 @@ router.post('/generar/:id_estudiante', async (req, res) => {
             });
         });
 
-        // Agregar categorías a la respuesta para mostrar en la aplicación
+        // Agregar categorías a la respuesta
         const respuesta = lista.map(item => {
             const producto = listaProductos.find(
                 p => p.id_alimento === item.id_alimento &&
@@ -161,6 +174,43 @@ router.post('/generar/:id_estudiante', async (req, res) => {
 
         res.status(500).json({
             mensaje: 'No se pudo generar la lista de compras',
+            detalle: error.message
+        });
+    }
+});
+
+// Actualizar si un producto ya fue comprado
+router.put('/producto/:id_detalle_lista', async (req, res) => {
+    try {
+        const id_detalle_lista = Number(req.params.id_detalle_lista);
+        const { comprado } = req.body;
+
+        if (!Number.isInteger(id_detalle_lista) || typeof comprado !== 'boolean') {
+            return res.status(400).json({
+                mensaje: 'Datos no válidos'
+            });
+        }
+
+        const producto = await prisma.detalle_lista_compras.update({
+            where: {
+                id_detalle_lista
+            },
+            data: {
+                comprado
+            }
+        });
+
+        res.json({
+            exitoso: true,
+            mensaje: 'Producto actualizado correctamente',
+            producto
+        });
+
+    } catch (error) {
+        console.error('Error al actualizar producto:', error);
+
+        res.status(500).json({
+            mensaje: 'No se pudo actualizar el producto',
             detalle: error.message
         });
     }
