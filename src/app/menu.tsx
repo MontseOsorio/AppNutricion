@@ -188,35 +188,6 @@ const mostrarComida = (
 
         </TouchableOpacity>
 
-        {/* NUEVO: Botón de cocina */}
-        <TouchableOpacity
-          style={styles.botonCocina}
-          onPress={() => router.push('/cocina')}
-          activeOpacity={0.7}
-        >
-
-          <Text style={styles.iconoCocina}>
-            🍳
-          </Text>
-
-          <View style={styles.contenidoCocina}>
-
-            <Text style={styles.textoCocina}>
-              Mi cocina
-            </Text>
-
-            <Text style={styles.subtextoCocina}>
-              Selecciona los aparatos que tienes en casa
-            </Text>
-
-          </View>
-
-          <Text style={styles.flechaCocina}>
-            ›
-          </Text>
-
-        </TouchableOpacity>
-
         {/* Plato nutritivo */}
         <Image
           source={require('../../assets/images/PlatoNutritivo.png')}
@@ -239,6 +210,28 @@ const mostrarComida = (
 >
   <Text style={{ color: '#1F416A', fontWeight: '800' }}>
     🍽️ Menú de cafetería
+  </Text>
+</TouchableOpacity>
+    
+{/* Equivalencias de alimentos */}
+<TouchableOpacity
+  style={{
+    backgroundColor: '#FFFFFF',
+    padding: 16,
+    borderRadius: 20,
+    marginTop: 5,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#DCE5EC',
+  }}
+  onPress={() => router.push('/equivalencias')}
+  activeOpacity={0.8}
+>
+  <Text style={{ color: '#1F416A', fontWeight: '800', fontSize: 15 }}>
+    🍎 Equivalencias de alimentos
+  </Text>
+  <Text style={{ color: '#777777', fontSize: 12, marginTop: 5 }}>
+    Aprende a sustituir alimentos y conocer sus porciones.
   </Text>
 </TouchableOpacity>
 
@@ -581,18 +574,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
 
-  iconoCocina: {
-    width: 38,
-    height: 38,
-    borderRadius: 13,
-    backgroundColor: '#e5eedf',
-    textAlign: 'center',
-    textAlignVertical: 'center',
-    fontSize: 20,
-    marginRight: 10,
-    overflow: 'hidden',
-    paddingTop: 7,
-  },
+  
 
   contenidoCocina: {
     flex: 1,

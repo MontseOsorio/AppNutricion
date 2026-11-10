@@ -165,18 +165,35 @@ model listas_compras {
 }
 
 model mediciones {
-  id_medicion      Int      @id @default(autoincrement())
-  id_estudiante    Int
-  id_consulta      Int?
-  fecha_medicion   DateTime @db.Date
-  peso_kg          Decimal? @db.Decimal(5, 2)
-  estatura_cm      Decimal? @db.Decimal(5, 2)
-  porcentaje_grasa Decimal? @db.Decimal(5, 2)
-  observaciones    String?  @db.Text
+  id_medicion       Int      @id @default(autoincrement())
+  id_estudiante     Int
+  id_consulta       Int?
+  fecha_medicion    DateTime @db.Date
+
+  peso_kg           Decimal? @db.Decimal(5, 2)
+  estatura_cm       Decimal? @db.Decimal(5, 2)
+  imc               Decimal? @db.Decimal(5, 2)
+
+  porcentaje_grasa  Decimal? @db.Decimal(5, 2)
+  masa_grasa_kg     Decimal? @db.Decimal(5, 2)
+
+  porcentaje_agua   Decimal? @db.Decimal(5, 2)
+  agua_corporal_kg  Decimal? @db.Decimal(5, 2)
+  masa_muscular_kg  Decimal? @db.Decimal(5, 2)
+  masa_osea_kg      Decimal? @db.Decimal(5, 2)
+
+  edad_metabolica   Int?
+  grasa_visceral    Decimal? @db.Decimal(5, 2)
+
+  sexo              String?  @db.VarChar(30)
+  edad              Int?
+
+  observaciones     String?  @db.Text
 
   @@index([id_consulta], map: "id_consulta")
   @@index([id_estudiante, fecha_medicion], map: "idx_mediciones_estudiante_fecha")
 }
+
 
 model menus_cafeteria {
   id_menu     Int      @id @default(autoincrement())

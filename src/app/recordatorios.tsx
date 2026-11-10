@@ -22,7 +22,7 @@ Notifications.setNotificationHandler({
     shouldShowList: true,
   }),
 });
-const API_URL = 'http://localhost:3000';
+const API_URL = 'http://192.168.0.10:3000';
 export default function Recordatorios() {
   const cerrarSesion = () => {
   const confirmarCierre = async () => {

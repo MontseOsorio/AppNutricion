@@ -71,6 +71,21 @@ export default function Nutriologa() {
   <Text style={styles.textoBoton}>Ver estudiantes</Text>
 </TouchableOpacity>
       </View>
+      
+      <View style={styles.tarjeta}>
+        <Text style={styles.icono}>📊</Text>
+        <Text style={styles.nombre}>Más datos</Text>
+        <Text style={styles.descripcion}>
+          Registra el peso, IMC y composición corporal de cada estudiante.
+        </Text>
+        <TouchableOpacity
+          style={styles.boton}
+          onPress={() => router.push('/mas-datos')}
+        >
+          <Text style={styles.textoBoton}>Registrar mediciones</Text>
+        </TouchableOpacity>
+      </View>
+
     </ScrollView>
   );
 }
