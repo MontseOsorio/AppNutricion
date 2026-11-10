@@ -224,13 +224,16 @@ const mostrarComida = (
           resizeMode="contain"
         />
 
-{/* BOTÓN TEMPORAL PARA PROBAR MENÚ DE CAFETERÍA */}
+
+
+{/* BOTÓN MENÚ DE CAFETERÍA */}
 <TouchableOpacity
   style={{
     backgroundColor: '#FFFFFF',
     padding: 15,
     borderRadius: 20,
     marginTop: 10,
+    marginBottom: 20,
   }}
   onPress={() => router.push('/menu_cafeteria')}
 >

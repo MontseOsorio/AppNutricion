@@ -1,13 +1,33 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useEffect, useState } from 'react';
 import {
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
 import { router } from 'expo-router';
 
 export default function Perfil() {
+  const [usuario, setUsuario] = useState<any>(null);
+
+  useEffect(() => {
+    const cargarUsuario = async () => {
+      try {
+        const datosGuardados = await AsyncStorage.getItem('usuario');
+
+        if (datosGuardados) {
+          setUsuario(JSON.parse(datosGuardados));
+        }
+      } catch (error) {
+        console.error('Error al cargar los datos del usuario:', error);
+      }
+    };
+
+    cargarUsuario();
+  }, []);
+
   return (
     <View style={styles.container}>
 
@@ -29,12 +49,14 @@ export default function Perfil() {
 
         <View style={styles.info}>
           <Text style={styles.nombre}>
-            Montserrat Osorio
-          </Text>
+  {usuario
+    ? `${usuario.nombre} ${usuario.apellidos}`
+    : 'Cargando...'}
+</Text>
 
-          <Text style={styles.expediente}>
-            Expediente: 327927
-          </Text>
+<Text style={styles.expediente}>
+  Expediente: {usuario?.expediente || 'No registrado'}
+</Text>
 
           <Text style={styles.universidad}>
             Facultad de Informática
