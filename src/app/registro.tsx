@@ -12,7 +12,9 @@ import {
 import { router } from 'expo-router';
 import { useState } from 'react';
 
-const API_URL = 'http://192.168.0.10:3000';
+
+const API_URL = 'http://localhost:3000';
+
 
 export default function Registro() {
 
@@ -51,12 +53,12 @@ export default function Registro() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          nombreCompleto,
-          expediente,
-          correo,
-          contrasena,
-          confirmarContrasena,
-        }),
+  nombreCompleto: nombreCompleto.trim(),
+  expediente: expediente.trim(),
+  correo: correo.trim().toLowerCase(),
+  contrasena,
+  confirmarContrasena,
+}),
       });
 
       const datos = await respuesta.json();

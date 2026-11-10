@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
   StyleSheet,
@@ -7,7 +8,6 @@ import {
   View,
 } from 'react-native';
 
-import { router } from 'expo-router';
 
 export default function Perfil() {
   const [usuario, setUsuario] = useState<any>(null);
@@ -30,6 +30,15 @@ export default function Perfil() {
 
   return (
     <View style={styles.container}>
+
+      {/* Botón regresar */}
+<TouchableOpacity
+  style={styles.botonRegresar}
+  onPress={() => router.replace('/menu')}
+  activeOpacity={0.7}
+>
+  <Text style={styles.flechaRegresar}>‹</Text>
+</TouchableOpacity>
 
       {/* Título */}
       <Text style={styles.titulo}>
@@ -138,15 +147,7 @@ export default function Perfil() {
         <Text style={styles.flecha}>›</Text>
       </TouchableOpacity>
 
-      {/* Cerrar sesión */}
-      <TouchableOpacity
-        style={styles.boton}
-        onPress={() => router.replace('/')}
-      >
-        <Text style={styles.textoBoton}>
-          Cerrar sesión
-        </Text>
-      </TouchableOpacity>
+      
 
     </View>
   );
@@ -295,31 +296,28 @@ const styles = StyleSheet.create({
     color: '#4D91C7',
     marginLeft: 8,
   },
+  botonRegresar: {
+  width: 40,
+  height: 40,
+  borderRadius: 14,
+  backgroundColor: '#FFFFFF',
+  justifyContent: 'center',
+  alignItems: 'center',
+  marginBottom: 12,
+  shadowColor: '#000',
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.08,
+  shadowRadius: 5,
+  elevation: 3,
+},
 
-  boton: {
-    width: '100%',
-    backgroundColor: '#4089C0',
-    paddingVertical: 15,
-    borderRadius: 28,
-    marginTop: 5,
+flechaRegresar: {
+  fontSize: 32,
+  color: '#4089C0',
+  lineHeight: 35,
+  marginTop: -4,
+},
 
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 3,
-    },
-    shadowOpacity: 0.15,
-    shadowRadius: 5,
-
-    elevation: 4,
-  },
-
-  textoBoton: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '800',
-    textAlign: 'center',
-  },
 
 });
 
