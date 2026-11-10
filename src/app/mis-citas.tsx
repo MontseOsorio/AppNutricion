@@ -1,5 +1,6 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Notifications from 'expo-notifications';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import {
@@ -11,13 +12,93 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+    shouldShowBanner: true,
+    shouldShowList: true,
+  }),
+});
 const API_URL = 'http://192.168.0.10:3000';
 const ID_NUTRIOLOGA = 2;
 
 export default function MisCitas() {
   const [citas, setCitas] = useState<any[]>([]);
   const [cargando, setCargando] = useState(true);
+  
+const programarRecordatorioCita = async (cita: any) => {
+  try {
+    const permiso = await Notifications.getPermissionsAsync();
+
+    console.log('PERMISO DE NOTIFICACIONES:', permiso.status);
+    console.log('CITA RECIBIDA:', cita.id_cita, cita.estado);
+
+    if (permiso.status !== 'granted') {
+      const solicitado = await Notifications.requestPermissionsAsync();
+
+      if (solicitado.status !== 'granted') {
+        console.log('No se concedieron permisos de notificaciones');
+        return;
+      }
+    }
+
+    const claveConfirmacion = `confirmacion_cita_v2_${cita.id_cita}`;
+    const claveRecordatorio = `recordatorio_cita_${cita.id_cita}`;
+
+    // 1. Notificación cuando la cita está confirmada
+    const confirmacionEnviada = await AsyncStorage.getItem(claveConfirmacion);
+
+    if (!confirmacionEnviada) {
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: '✅ ¡Tu cita fue confirmada!',
+          body: `Tu consulta será el ${cita.fecha} a las ${cita.hora}.`,
+        },
+        trigger: null,
+      });
+
+      console.log('NOTIFICACIÓN DE CONFIRMACIÓN PROGRAMADA');
+
+      await AsyncStorage.setItem(claveConfirmacion, 'true');
+    }
+
+    // 2. Recordatorio dos horas antes de la cita
+    const yaProgramado = await AsyncStorage.getItem(claveRecordatorio);
+
+    if (!yaProgramado) {
+      const [anio, mes, dia] = cita.fecha.split('-').map(Number);
+      const [hora, minutos] = cita.hora.split(':').map(Number);
+
+      const fechaCita = new Date(anio, mes - 1, dia, hora, minutos);
+
+      const fechaRecordatorio = new Date(
+        fechaCita.getTime() - 2 * 60 * 60 * 1000
+      );
+
+      if (fechaRecordatorio > new Date()) {
+        const identificador =
+          await Notifications.scheduleNotificationAsync({
+            content: {
+              title: '📅 ¡Recuerda tu cita!',
+              body: `Hoy tienes una consulta nutricional a las ${cita.hora}.`,
+            },
+            trigger: {
+              type: Notifications.SchedulableTriggerInputTypes.DATE,
+              date: fechaRecordatorio,
+            },
+          });
+
+        console.log('RECORDATORIO DE CITA PROGRAMADO:', identificador);
+
+        await AsyncStorage.setItem(claveRecordatorio, identificador);
+      }
+    }
+  } catch (error) {
+    console.log('Error al programar notificación de cita:', error);
+  }
+};
 
   const cargarCitas = async () => {
     try {
@@ -45,7 +126,13 @@ export default function MisCitas() {
           Number(cita.id_estudiante) === Number(usuario.id_usuario)
       );
 
-      setCitas(misCitas);
+     setCitas(misCitas);
+
+for (const cita of misCitas) {
+  if (cita.estado === 'confirmada') {
+    await programarRecordatorioCita(cita);
+  }
+}
     } catch (error) {
       console.log('Error al cargar citas:', error);
       Alert.alert('Error', 'No se pudieron cargar tus citas.');

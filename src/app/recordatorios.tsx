@@ -1,5 +1,6 @@
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
+  Alert,
   Image,
   ScrollView,
   StyleSheet,
@@ -8,13 +9,92 @@ import {
   View,
 } from 'react-native';
 
+import * as Notifications from 'expo-notifications';
 import { router } from 'expo-router';
-
-
-import { useState } from 'react';
-
+import { useEffect, useState } from 'react';
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+    shouldShowBanner: true,
+    shouldShowList: true,
+  }),
+});
+const API_URL = 'http://192.168.0.10:3000';
 export default function Recordatorios() {
+  const [ahora, setAhora] = useState(new Date());
+  const [idUsuario, setIdUsuario] = useState<number | null>(null);
+const [cargando, setCargando] = useState(true);
+useEffect(() => {
+  const programarNotificaciones = async () => {
+    try {
+      const { status } = await Notifications.requestPermissionsAsync();
 
+      if (status !== 'granted') {
+        Alert.alert(
+          'Permisos necesarios',
+          'Activa las notificaciones para recibir recordatorios de agua.'
+        );
+        return;
+      }
+
+      await Notifications.cancelAllScheduledNotificationsAsync();
+
+      const horarios = [8, 10, 12, 14, 16, 18, 20, 22];
+
+      for (const hora of horarios) {
+        await Notifications.scheduleNotificationAsync({
+          content: {
+            title: '💧 ¡Hora de hidratarte!',
+            body: 'Recuerda tomar un vaso de agua para mantenerte hidratado.',
+          },
+          trigger: {
+            type: Notifications.SchedulableTriggerInputTypes.DAILY,
+            hour: hora,
+            minute: 0,
+          },
+        });
+      }
+
+      console.log('Notificaciones de agua programadas');
+      Alert.alert('¡Listo!', 'Tus recordatorios de agua están programados.');
+    } catch (error) {
+      console.log('Error al programar notificaciones:', error);
+    }
+  };
+
+  programarNotificaciones();
+}, []);
+useEffect(() => {
+  const intervalo = setInterval(() => {
+    setAhora(new Date());
+  }, 30000);
+
+  return () => clearInterval(intervalo);
+}, []);
+
+const horariosHoras = [8, 10, 12, 14, 16, 18, 20, 22];
+
+const puedeRegistrar = (index: number) => {
+  const horaActual = ahora.getHours();
+  const horaInicio = horariosHoras[index];
+  const horaFin = horariosHoras[index + 1] ?? 24;
+
+  return horaActual >= horaInicio && horaActual < horaFin;
+};
+const obtenerEstadoToma = (index: number) => {
+  if (tomas[index]) return 'Tomada ✓';
+
+  const horaActual = ahora.getHours();
+  const horaInicio = horariosHoras[index];
+  const horaFin = horariosHoras[index + 1] ?? 24;
+
+  if (horaActual < horaInicio) return 'Próxima';
+  if (horaActual >= horaFin) return 'Vencida';
+
+  return 'Pendiente';
+};
   const [tomas, setTomas] = useState([
     false,
     false,
@@ -25,7 +105,52 @@ export default function Recordatorios() {
     false,
     false,
   ]);
+  useEffect(() => {
+  const obtenerUsuario = async () => {
+    try {
+      const usuarioGuardado = await AsyncStorage.getItem('usuario');
 
+      if (usuarioGuardado) {
+        const usuario = JSON.parse(usuarioGuardado);
+        setIdUsuario(usuario.id_usuario);
+      }
+    } catch (error) {
+      console.log('Error al obtener usuario:', error);
+    }
+  };
+
+  obtenerUsuario();
+}, []);
+useEffect(() => {
+  if (!idUsuario) return;
+
+  const cargarTomas = async () => {
+    try {
+      const respuesta = await fetch(`${API_URL}/api/agua/${idUsuario}`);
+
+      if (!respuesta.ok) {
+        throw new Error('No se pudieron cargar las tomas');
+      }
+
+      const registros = await respuesta.json();
+
+      const tomasGuardadas = Array.from({ length: 8 }, (_, index) =>
+        registros.some(
+          (registro: any) =>
+            registro.observaciones === `Toma ${index + 1}`
+        )
+      );
+
+      setTomas(tomasGuardadas);
+    } catch (error) {
+      console.log('Error al cargar las tomas:', error);
+    } finally {
+      setCargando(false);
+    }
+  };
+
+  cargarTomas();
+}, [idUsuario]);
   const horarios = [
     '8:00 AM',
     '10:00 AM',
@@ -37,12 +162,65 @@ export default function Recordatorios() {
     '10:00 PM',
   ];
 
-  const registrarAgua = (index: number) => {
-    const nuevasTomas = [...tomas];
-    nuevasTomas[index] = !nuevasTomas[index];
-    setTomas(nuevasTomas);
-  };
+  const registrarAgua = async (index: number) => {
+  if (!puedeRegistrar(index)) {
+    Alert.alert(
+      'Horario vencido',
+      'Ya pasó la hora para registrar esta toma de agua.'
+    );
+    return;
+  }
 
+  if (!idUsuario) {
+    Alert.alert('Error', 'No se encontró el usuario.');
+    return;
+  }
+
+  if (tomas[index]) {
+    try {
+      const respuesta = await fetch(
+        `${API_URL}/api/agua/${idUsuario}/${index}`,
+        { method: 'DELETE' }
+      );
+
+      if (!respuesta.ok) {
+        throw new Error('No se pudo eliminar el registro.');
+      }
+
+      const nuevasTomas = [...tomas];
+      nuevasTomas[index] = false;
+      setTomas(nuevasTomas);
+    } catch (error) {
+      Alert.alert('Error', 'No se pudo actualizar tu registro.');
+    }
+
+    return;
+  }
+
+  try {
+    const respuesta = await fetch(`${API_URL}/api/agua`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        id_usuario: idUsuario,
+        numero_toma: index,
+      }),
+    });
+
+    if (!respuesta.ok) {
+      throw new Error('No se pudo registrar el agua.');
+    }
+
+    const nuevasTomas = [...tomas];
+    nuevasTomas[index] = true;
+    setTomas(nuevasTomas);
+
+  } catch (error) {
+    Alert.alert('Error', 'No se pudo guardar tu toma de agua.');
+  }
+};
   const totalTomadas = tomas.filter(Boolean).length;
     return (
   <ScrollView
@@ -102,6 +280,7 @@ export default function Recordatorios() {
             key={index}
             style={styles.toma}
             onPress={() => registrarAgua(index)}
+            disabled={!tomada && !puedeRegistrar(index)}
             activeOpacity={0.7}
           >
 
@@ -145,7 +324,7 @@ export default function Recordatorios() {
                   : styles.estadoPendiente,
               ]}
             >
-              {tomada ? 'Tomada ✓' : 'Pendiente'}
+             {obtenerEstadoToma(index)}
             </Text>
 
           </TouchableOpacity>
