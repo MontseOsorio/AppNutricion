@@ -224,6 +224,21 @@ const mostrarComida = (
           resizeMode="contain"
         />
 
+{/* BOTÓN TEMPORAL PARA PROBAR MENÚ DE CAFETERÍA */}
+<TouchableOpacity
+  style={{
+    backgroundColor: '#FFFFFF',
+    padding: 15,
+    borderRadius: 20,
+    marginTop: 10,
+  }}
+  onPress={() => router.push('/menu_cafeteria')}
+>
+  <Text style={{ color: '#1F416A', fontWeight: '800' }}>
+    🍽️ Menú de cafetería
+  </Text>
+</TouchableOpacity>
+
         {/* Resumen de calorías */}
         <View style={styles.tarjetaCalorias}>
 
@@ -636,3 +651,5 @@ textoSinComida: {
   paddingVertical: 12,
 },
 });
+
+

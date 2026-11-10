@@ -237,6 +237,13 @@ Alert.alert('¡Bienvenid@!', datos.mensaje, [
         </Text>
       </TouchableOpacity>
 
+
+
+
+
+
+
+
       {/* Registro: solamente estudiantes */}
       {tipoUsuario === 'estudiante' && (
         <View style={styles.registro}>
@@ -432,3 +439,7 @@ const styles = StyleSheet.create({
   },
 
 });
+
+
+
+
