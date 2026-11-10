@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   Alert,
   Image,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -21,8 +22,37 @@ Notifications.setNotificationHandler({
     shouldShowList: true,
   }),
 });
-const API_URL = 'http://192.168.0.10:3000';
+const API_URL = 'http://localhost:3000';
 export default function Recordatorios() {
+  const cerrarSesion = () => {
+  const confirmarCierre = async () => {
+    try {
+      await AsyncStorage.removeItem('usuario');
+      router.replace('/login');
+    } catch (error) {
+      Alert.alert('Error', 'No se pudo cerrar la sesión.');
+    }
+  };
+
+  if (Platform.OS === 'web') {
+    if (window.confirm('¿Estás seguro de que deseas cerrar sesión?')) {
+      confirmarCierre();
+    }
+  } else {
+    Alert.alert(
+      'Cerrar sesión',
+      '¿Estás seguro de que deseas cerrar sesión?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Cerrar sesión',
+          style: 'destructive',
+          onPress: confirmarCierre,
+        },
+      ]
+    );
+  }
+};
   const [ahora, setAhora] = useState(new Date());
   const [idUsuario, setIdUsuario] = useState<number | null>(null);
 const [cargando, setCargando] = useState(true);
@@ -46,7 +76,7 @@ useEffect(() => {
       for (const hora of horarios) {
         await Notifications.scheduleNotificationAsync({
           content: {
-            title: '💧 ¡Hora de hidratarte!',
+           title: '💧 ¡Hora de hidratarte!',
             body: 'Recuerda tomar un vaso de agua para mantenerte hidratado.',
           },
           trigger: {
@@ -84,7 +114,7 @@ const puedeRegistrar = (index: number) => {
   return horaActual >= horaInicio && horaActual < horaFin;
 };
 const obtenerEstadoToma = (index: number) => {
-  if (tomas[index]) return 'Tomada ✓';
+  if (tomas[index]) return 'Tomada ✅';
 
   const horaActual = ahora.getHours();
   const horaInicio = horariosHoras[index];
@@ -227,7 +257,14 @@ useEffect(() => {
     style={{ flex: 1 }}
     contentContainerStyle={styles.container}
   >
-        
+        <TouchableOpacity
+  style={styles.botonCerrarSesion}
+  onPress={cerrarSesion}
+>
+  <Text style={styles.textoCerrarSesion}>
+    Cerrar sesión
+  </Text>
+</TouchableOpacity>
 
       {/* Título */}
       <Text style={styles.titulo}>
@@ -339,7 +376,7 @@ useEffect(() => {
   onPress={() => router.push('/mis-citas')}
 >
   <Text style={styles.botonMisCitasTexto}>
-    📋 Mis citas
+    ­📋 Mis citas
   </Text>
 </TouchableOpacity>
 {/* Botón para consultar menú */}
@@ -583,5 +620,19 @@ botonMisCitasTexto: {
   color: '#1F416A',
   fontSize: 16,
   fontWeight: '700',
+},
+botonCerrarSesion: {
+  alignSelf: 'flex-end',
+  backgroundColor: '#1F416A',
+  paddingVertical: 10,
+  paddingHorizontal: 16,
+  borderRadius: 12,
+  marginBottom: 15,
+},
+
+textoCerrarSesion: {
+  color: '#FFFFFF',
+  fontWeight: '700',
+  fontSize: 14,
 },
 });

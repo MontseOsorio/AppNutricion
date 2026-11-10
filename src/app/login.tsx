@@ -1,6 +1,7 @@
 
 import {
   Alert,
+  Platform,
   StyleSheet,
   Text,
   TextInput,
@@ -12,7 +13,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import { useState } from 'react';
 
-const API_URL = 'http://192.168.0.10:3000';
+
+const API_URL = 'http://localhost:3000';
+
 
 export default function Login() {
 
@@ -65,6 +68,7 @@ const iniciarSesion = async () => {
     const datos = await respuesta.json();
 
     console.log('RESPUESTA DEL SERVIDOR:', datos);
+    
 
     if (!respuesta.ok) {
       Alert.alert('Error', datos.mensaje);
@@ -75,18 +79,37 @@ const iniciarSesion = async () => {
       'usuario',
       JSON.stringify(datos.usuario)
     );
-Alert.alert('¡Bienvenid@!', datos.mensaje, [
-  {
-    text: 'Continuar',
-    onPress: () => {
-      if (datos.usuario.rol === 'nutriologa') {
-        router.replace('/nutriologa');
-      } else {
-        router.replace('/recordatorios');
-      }
+// Guardar los datos del usuario
+await AsyncStorage.setItem(
+  'usuario',
+  JSON.stringify(datos.usuario)
+);
+
+// Mensaje de bienvenida según la plataforma
+if (Platform.OS === 'web') {
+  window.alert(`¡Bienvenid@!\n${datos.mensaje}`);
+
+  // Redirigir después de aceptar
+  if (datos.usuario.rol === 'nutriologa') {
+    router.replace('/nutriologa');
+  } else {
+    router.replace('/recordatorios');
+  }
+
+} else {
+  Alert.alert('¡Bienvenid@!', datos.mensaje, [
+    {
+      text: 'Continuar',
+      onPress: () => {
+        if (datos.usuario.rol === 'nutriologa') {
+          router.replace('/nutriologa');
+        } else {
+          router.replace('/recordatorios');
+        }
+      },
     },
-  },
-]);
+  ]);
+}
 
   } catch (error) {
     console.log('ERROR LOGIN:', error);
