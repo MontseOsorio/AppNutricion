@@ -105,6 +105,7 @@ router.get('/:idNutriologa', async (req, res) => {
                 TIME_FORMAT(c.hora, '%H:%i') AS hora,
                 c.estado,
                 c.motivo,
+                c.confirmacion_asistencia,
                 u.nombre,
                 u.apellidos,
                 u.correo
@@ -182,5 +183,116 @@ router.put('/:idNutriologa/:idCita/estado', async (req, res) => {
         });
     }
 });
+// Cancelar una cita por parte del estudiante
+router.put('/estudiante/:idEstudiante/:idCita/cancelar', async (req, res) => {
+    try {
+        const idEstudiante = Number(req.params.idEstudiante);
+        const idCita = Number(req.params.idCita);
 
+        const cita = await prisma.citas.findFirst({
+            where: {
+                id_cita: idCita,
+                id_estudiante: idEstudiante
+            }
+        });
+
+        if (!cita) {
+            return res.status(404).json({
+                mensaje: 'No se encontró tu cita.'
+            });
+        }
+
+        if (!['pendiente', 'confirmada'].includes(cita.estado)) {
+            return res.status(400).json({
+                mensaje: 'Esta cita ya no se puede cancelar.'
+            });
+        }
+
+        const citaActualizada = await prisma.citas.update({
+            where: {
+                id_cita: idCita
+            },
+            data: {
+                estado: 'cancelada'
+            }
+        });
+
+        res.json({
+            mensaje: 'Tu cita fue cancelada correctamente.',
+            cita: citaActualizada
+        });
+
+    } catch (error) {
+        console.error('Error al cancelar cita:', error);
+
+        res.status(500).json({
+            mensaje: 'No se pudo cancelar la cita.'
+        });
+    }
+});
+// Confirmar asistencia del estudiante
+router.put('/estudiante/:idEstudiante/:idCita/asistencia', async (req, res) => {
+    try {
+        const idEstudiante = Number(req.params.idEstudiante);
+        const idCita = Number(req.params.idCita);
+        const { asistira } = req.body;
+
+        if (typeof asistira !== 'boolean') {
+            return res.status(400).json({
+                mensaje: 'Debes indicar si asistirás o no.'
+            });
+        }
+
+        const cita = await prisma.citas.findFirst({
+            where: {
+                id_cita: idCita,
+                id_estudiante: idEstudiante
+            }
+        });
+
+        if (!cita) {
+            return res.status(404).json({
+                mensaje: 'No se encontró tu cita.'
+            });
+        }
+
+        if (cita.estado !== 'confirmada') {
+            return res.status(400).json({
+                mensaje: 'Solo puedes confirmar asistencia a citas confirmadas.'
+            });
+        }
+
+        if (cita.confirmacion_asistencia !== null) {
+            return res.status(400).json({
+                mensaje: 'Ya registraste tu respuesta de asistencia.'
+            });
+        }
+
+        const citaActualizada = await prisma.citas.update({
+            where: {
+                id_cita: idCita
+            },
+            data: asistira
+                ? { confirmacion_asistencia: true }
+                : {
+                    confirmacion_asistencia: false,
+                    estado: 'cancelada'
+                }
+        });
+
+        res.json({
+            mensaje: asistira
+                ? '¡Gracias! Tu asistencia quedó confirmada.'
+                : 'Tu cita fue cancelada y el horario quedó disponible.',
+            cita: citaActualizada
+        });
+
+    } catch (error) {
+        console.error('Error al confirmar asistencia:', error);
+
+        res.status(500).json({
+            mensaje: 'No se pudo registrar tu respuesta.'
+        });
+    }
+});
 module.exports = router;

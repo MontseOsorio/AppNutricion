@@ -33,8 +33,9 @@ model citas {
   fecha           DateTime     @db.Date
   hora            DateTime     @db.Time(0)
   motivo          String?      @db.Text
-  estado          citas_estado @default(pendiente)
-  fecha_solicitud DateTime     @default(now()) @db.Timestamp(0)
+    estado                  citas_estado @default(pendiente)
+  confirmacion_asistencia Boolean?
+  fecha_solicitud         DateTime     @default(now()) @db.Timestamp(0)
 
   @@index([id_nutriologa], map: "id_nutriologa")
   @@index([id_estudiante, fecha], map: "idx_citas_estudiante")

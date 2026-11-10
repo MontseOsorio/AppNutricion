@@ -60,7 +60,108 @@ export default function MisCitas() {
       cargarCitas();
     }, [])
   );
+  const cancelarCita = (idCita: number) => {
+    Alert.alert(
+      'Cancelar cita',
+      '¿Estás segura de que deseas cancelar esta cita?',
+      [
+        {
+          text: 'No',
+          style: 'cancel',
+        },
+        {
+          text: 'Sí, cancelar',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const usuarioGuardado = await AsyncStorage.getItem('usuario');
 
+              if (!usuarioGuardado) {
+                Alert.alert('Error', 'No se encontró tu sesión.');
+                return;
+              }
+
+              const usuario = JSON.parse(usuarioGuardado);
+
+              const respuesta = await fetch(
+                `${API_URL}/api/citas/estudiante/${usuario.id_usuario}/${idCita}/cancelar`,
+                {
+                  method: 'PUT',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                }
+              );
+
+              const datos = await respuesta.json();
+
+              if (!respuesta.ok) {
+                throw new Error(datos.mensaje || 'No se pudo cancelar la cita.');
+              }
+
+              Alert.alert('¡Listo!', datos.mensaje);
+              cargarCitas();
+
+            } catch (error: any) {
+              Alert.alert('Error', error.message || 'No se pudo cancelar la cita.');
+            }
+          },
+        },
+      ]
+    );
+  };
+  const confirmarAsistencia = (idCita: number, asistira: boolean) => {
+  Alert.alert(
+    asistira ? 'Confirmar asistencia' : 'Cancelar asistencia',
+    asistira
+      ? '¿Confirmas que asistirás a tu cita?'
+      : '¿Seguro que no podrás asistir? El horario quedará disponible para otro alumno.',
+    [
+      {
+        text: 'Regresar',
+        style: 'cancel',
+      },
+      {
+        text: 'Confirmar',
+        onPress: async () => {
+          try {
+            const usuarioGuardado = await AsyncStorage.getItem('usuario');
+
+            if (!usuarioGuardado) {
+              Alert.alert('Error', 'No se encontró tu sesión.');
+              return;
+            }
+
+            const usuario = JSON.parse(usuarioGuardado);
+
+            const respuesta = await fetch(
+              `${API_URL}/api/citas/estudiante/${usuario.id_usuario}/${idCita}/asistencia`,
+              {
+                method: 'PUT',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ asistira }),
+              }
+            );
+
+            const datos = await respuesta.json();
+
+            if (!respuesta.ok) {
+              throw new Error(datos.mensaje || 'No se pudo registrar tu respuesta.');
+            }
+
+            Alert.alert('¡Listo!', datos.mensaje);
+            cargarCitas();
+
+          } catch (error: any) {
+            Alert.alert('Error', error.message || 'No se pudo registrar tu respuesta.');
+          }
+        },
+      },
+    ]
+  );
+};
   const obtenerEstado = (estado: string) => {
     switch (estado) {
       case 'confirmada':
@@ -135,7 +236,52 @@ export default function MisCitas() {
                     </Text>
                   </View>
                 </View>
+                  {cita.estado === 'confirmada' &&
+ cita.confirmacion_asistencia === null && (
+  <View style={styles.asistenciaContenedor}>
+    <Text style={styles.textoPregunta}>
+      ¿Asistirás a tu cita?
+    </Text>
+
+    <TouchableOpacity
+      style={styles.botonAsistire}
+      onPress={() => confirmarAsistencia(cita.id_cita, true)}
+    >
+      <Text style={styles.textoAsistire}>
+        Sí, asistiré
+      </Text>
+    </TouchableOpacity>
+
+    <TouchableOpacity
+      style={styles.botonNoAsistire}
+      onPress={() => confirmarAsistencia(cita.id_cita, false)}
+    >
+      <Text style={styles.textoNoAsistire}>
+        No podré asistir
+      </Text>
+    </TouchableOpacity>
+  </View>
+)}
+
+{['pendiente', 'confirmada'].includes(cita.estado) &&
+ cita.confirmacion_asistencia !== true && (
+  <TouchableOpacity
+    style={styles.botonCancelar}
+    onPress={() => cancelarCita(cita.id_cita)}
+  >
+    <Text style={styles.textoCancelar}>
+      Cancelar cita
+    </Text>
+  </TouchableOpacity>
+)}
+
+{cita.confirmacion_asistencia === true && (
+  <Text style={styles.asistenciaConfirmada}>
+    ✓ Ya confirmaste tu asistencia
+  </Text>
+)}
               </View>
+              
             );
           })
         )}
@@ -260,5 +406,58 @@ const styles = StyleSheet.create({
   textoBoton: {
     color: '#FFFFFF',
     fontWeight: '700',
+  },
+    botonCancelar: {
+    backgroundColor: '#FBE1E1',
+    paddingVertical: 11,
+    borderRadius: 15,
+    marginTop: 15,
+    alignItems: 'center',
+  },
+  textoCancelar: {
+    color: '#B83232',
+    fontWeight: '700',
+    fontSize: 13,
+  },
+    asistenciaContenedor: {
+    backgroundColor: '#F1F7FC',
+    borderRadius: 16,
+    padding: 13,
+    marginTop: 15,
+  },
+  textoPregunta: {
+    color: '#1F416A',
+    fontSize: 14,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginBottom: 12,
+  },
+  botonAsistire: {
+    backgroundColor: '#DDF2E3',
+    paddingVertical: 11,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  textoAsistire: {
+    color: '#27834A',
+    fontWeight: '700',
+  },
+  botonNoAsistire: {
+    backgroundColor: '#FBE1E1',
+    paddingVertical: 11,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
+  textoNoAsistire: {
+    color: '#B83232',
+    fontWeight: '700',
+  },
+  asistenciaConfirmada: {
+    color: '#27834A',
+    fontSize: 13,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginTop: 15,
   },
 });

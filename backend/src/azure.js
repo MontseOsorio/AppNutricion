@@ -15,9 +15,9 @@ if (!process.env.AZURE_OPENAI_ENDPOINT ||
     throw new Error("Faltan las variables de configuración de Azure en .env");
 }
 
-// Crear el cliente de Azure
+// Crear el cliente de Azuref
 const client = new OpenAI({
-    baseURL: `${process.env.AZURE_OPENAI_ENDPOINT}/openai/v1`,
+    baseURL: process.env.AZURE_OPENAI_ENDPOINT.replace(/\/+$/, ""),
     apiKey: process.env.AZURE_OPENAI_API_KEY
 });
 
