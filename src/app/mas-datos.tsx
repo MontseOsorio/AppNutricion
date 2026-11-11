@@ -11,7 +11,7 @@ import {
     View,
 } from 'react-native';
 
-const API_URL = 'http://192.168.0.10:3000';
+const API_URL = 'https://troyafit-api.onrender.com';
 
 interface Estudiante {
   id_usuario: number;

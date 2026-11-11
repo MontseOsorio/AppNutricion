@@ -12,7 +12,7 @@ import {
 import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 
-const API_URL = 'http://192.168.0.10:3000';
+const API_URL = 'https://troyafit-api.onrender.com';
 const ID_NUTRIOLOGA = 2;
 
 const dias = [
